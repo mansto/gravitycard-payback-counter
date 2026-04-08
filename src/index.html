@@ -450,6 +450,7 @@
   function onBudgetInput() {
     const val = parseFloat(document.getElementById('budget-input').value);
     budgetStart = isNaN(val) ? null : val;
+    budgetSpent = categories.reduce((sum, c) => sum + c.sum, 0);
     save();
     renderBudget();
   }
