@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Gravity Card Payback Counter</title>
+
+  <!-- PWA Meta -->
+  <meta name="application-name" content="Gravity Card Payback Counter" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gravity Card Payback Counter" />
+  <meta name="theme-color" content="#0d0d0d" />
+  <meta name="description" content="Kategorien-Counter mit Summen" />
+
+  <!-- Icons -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      background-image:
+        radial-gradient(circle at 20% 20%, #1a1200 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, #001020 0%, transparent 50%);
+      min-height: 100vh;
+      font-family: 'IBM Plex Mono', monospace;
+      color: #f0f0f0;
+      padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    }
+
+    .app { padding: 32px 16px 80px; }
+
+    /* Header */
+    .header { max-width: 520px; margin: 0 auto 28px; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+    .title { font-family: 'Bebas Neue', cursive; font-size: 42px; letter-spacing: 6px; line-height: 1; }
+    .subtitle { color: #444; font-size: 11px; letter-spacing: 4px; margin-top: 4px; }
+    .header-divider { height: 1px; background: linear-gradient(90deg, #333, transparent); margin-top: 16px; }
+
+    .btn-group { display: flex; gap: 8px; }
+
+    .btn-reset {
+      background: transparent; border: 1px solid #2a2a2a; border-radius: 10px;
+      color: #555; padding: 8px 14px; cursor: pointer; font-size: 11px;
+      letter-spacing: 2px; font-family: 'IBM Plex Mono', monospace;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover { border-color: #444; color: #888; }
+
+    .btn-new {
+      background: #f0f0f0; border: none; border-radius: 10px;
+      color: #0d0d0d; padding: 8px 16px; cursor: pointer; font-size: 13px;
+      font-family: 'Bebas Neue', cursive; letter-spacing: 3px;
+      transition: all 0.2s;
+    }
+    .btn-new:hover { background: #fff; }
+
+    /* Cards grid */
+    .cards { max-width: 520px; margin: 0 auto; display: grid; gap: 14px; }
+
+    .empty {
+      text-align: center; color: #333; font-family: 'Bebas Neue', cursive;
+      font-size: 20px; letter-spacing: 4px; padding: 60px 0;
+    }
+
+    /* Card */
+    .card {
+      background: #1a1a1a; border-radius: 16px; padding: 24px 20px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: box-shadow 0.3s;
+    }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-name-row { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .card-name { font-family: 'Bebas Neue', cursive; font-size: 22px; letter-spacing: 2px; }
+    .card-actions { display: flex; gap: 6px; }
+
+    .btn-icon {
+      background: none; border: 1px solid #333; border-radius: 8px;
+      color: #888; cursor: pointer; padding: 4px 8px; font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { border-color: #555; color: #bbb; }
+
+    .counter-display { text-align: center; padding: 8px 0; }
+    .counter-number {
+      font-family: 'Bebas Neue', cursive; font-size: 72px; line-height: 1; letter-spacing: 4px;
+    }
+    .counter-meta { color: #555; font-size: 13px; font-family: monospace; margin-top: 4px; }
+
+    .btn-row { display: flex; gap: 8px; }
+
+    .btn-dec {
+      flex: 1; padding: 14px 0; background: transparent;
+      border-radius: 12px; font-size: 24px; font-weight: bold;
+      cursor: pointer; transition: all 0.15s; font-family: 'Bebas Neue', cursive;
+    }
+    .btn-inc {
+      flex: 1; padding: 14px 0;
+      border-radius: 12px; font-size: 24px; font-weight: bold;
+      cursor: pointer; transition: all 0.15s; font-family: 'Bebas Neue', cursive;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 16px;
+    }
+    .modal {
+      background: #111; border: 1px solid #333; border-radius: 20px;
+      padding: 28px 24px; width: 100%; max-width: 400px;
+    }
+    .modal-title {
+      font-family: 'Bebas Neue', cursive; font-size: 24px;
+      letter-spacing: 3px; margin-bottom: 20px;
+    }
+
+    label { color: #888; font-size: 12px; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+
+    input[type="text"], input[type="number"] {
+      width: 100%; background: #1a1a1a; border: 1px solid #333;
+      border-radius: 10px; padding: 12px 14px; color: #f0f0f0;
+      font-size: 15px; font-family: monospace; outline: none;
+      margin-bottom: 14px; transition: border-color 0.2s;
+    }
+    input:focus { border-color: #555; }
+
+    .hint { font-size: 12px; color: #555; font-family: monospace; margin-top: -10px; margin-bottom: 16px; }
+
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .color-dot {
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    .modal-footer { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; padding: 12px 0; background: transparent; border: 1px solid #333;
+      border-radius: 12px; color: #888; cursor: pointer;
+      font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px;
+    }
+    .btn-save {
+      flex: 2; padding: 12px 0; border-radius: 12px; cursor: pointer;
+      font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px;
+      transition: all 0.2s;
+    }
+
+    /* Budget Panel */
+    .budget-panel {
+      max-width: 520px; margin: 0 auto 20px;
+      background: #1a1a1a; border: 1px solid #2a2a2a;
+      border-radius: 16px; padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .budget-label {
+      font-family: 'Bebas Neue', cursive; font-size: 13px;
+      letter-spacing: 3px; color: #555;
+    }
+    .budget-row { display: flex; align-items: center; gap: 12px; }
+    .budget-input-wrap { position: relative; flex: 1; }
+    .budget-input-wrap span {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: #555; font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+      pointer-events: none;
+    }
+    #budget-input {
+      width: 100%; background: #111; border: 1px solid #2a2a2a;
+      border-radius: 10px; padding: 10px 14px 10px 26px; color: #f0f0f0;
+      font-size: 16px; font-family: 'IBM Plex Mono', monospace; outline: none;
+      margin-bottom: 0; transition: border-color 0.2s;
+    }
+    #budget-input:focus { border-color: #444; }
+    .btn-budget-reset {
+      background: transparent; border: 1px solid #2a2a2a; border-radius: 10px;
+      color: #555; padding: 10px 12px; cursor: pointer; font-size: 11px;
+      letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace;
+      white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-budget-reset:hover { border-color: #444; color: #888; }
+    .budget-remaining {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding-top: 6px; border-top: 1px solid #222;
+    }
+    .budget-remaining-label { font-size: 11px; color: #444; letter-spacing: 2px; }
+    .budget-remaining-value {
+      font-family: 'Bebas Neue', cursive; font-size: 32px; letter-spacing: 3px;
+      transition: color 0.3s;
+    }
+
+    /* PIN Screen */
+    #pin-screen {
+      position: fixed; inset: 0; background: #0d0d0d;
+      background-image: radial-gradient(circle at 20% 20%, #1a1200 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, #001020 0%, transparent 50%);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; z-index: 999; padding: 24px;
+    }
+    #pin-screen.hidden { display: none; }
+    .pin-logo { font-family: 'Bebas Neue', cursive; font-size: 36px; letter-spacing: 6px; color: #f0f0f0; line-height: 1; }
+    .pin-logo-sub { font-family: 'Bebas Neue', cursive; font-size: 36px; letter-spacing: 6px; color: #333; line-height: 1; margin-bottom: 40px; }
+    .pin-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: #555; margin-bottom: 20px; }
+    .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #333; background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pin-dot.filled { background: #c0703a; border-color: #c0703a; box-shadow: 0 0 8px #c0703a88; }
+    .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; }
+    .pin-btn {
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 14px;
+      color: #f0f0f0; font-size: 22px; font-family: 'Bebas Neue', cursive;
+      letter-spacing: 2px; padding: 18px 0; cursor: pointer;
+      transition: all 0.12s; user-select: none;
+    }
+    .pin-btn:active { background: #252525; border-color: #444; transform: scale(0.96); }
+    .pin-btn.del { color: #555; font-size: 18px; }
+    .pin-btn.empty { visibility: hidden; }
+    .pin-error {
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+      color: #c03a3a; letter-spacing: 2px; margin-top: -16px; margin-bottom: 16px;
+      min-height: 18px; text-align: center;
+    }
+
+    /* Install banner */
+    #install-banner {
+      position: fixed; bottom: 16px; left: 16px; right: 16px;
+      background: #1a1a1a; border: 1px solid #333; border-radius: 14px;
+      padding: 14px 16px; display: none; align-items: center;
+      justify-content: space-between; gap: 12px; z-index: 200;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    #install-banner.visible { display: flex; }
+    #install-banner span { font-size: 13px; color: #aaa; }
+    #btn-install {
+      background: #f0f0f0; color: #0d0d0d; border: none; border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; font-family: 'Bebas Neue', cursive;
+      font-size: 14px; letter-spacing: 2px; white-space: nowrap;
+    }
+    #btn-dismiss { background: none; border: none; color: #555; cursor: pointer; font-size: 18px; }
+  </style>
+</head>
+<body>
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <div class="pin-logo">GRAVITY CARD</div>
+  <div class="pin-logo-sub">PAYBACK COUNTER</div>
+  <div class="pin-label">PIN EINGEBEN</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn empty" disabled></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="title">GRAVITY CARD</div>
+        <div class="title" style="color:#555">PAYBACK COUNTER</div>
+        <div style="font-size:12px; color:#6b7280; margin-top:5px; line-height:1.5;">Erfasse Käufe pro Kategorie und behalte dein Budget im Blick.</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn-reset" onclick="resetAll()">RESET ALL</button>
+        <button class="btn-new" onclick="openAdd()">+ NEU</button>
+      </div>
+    </div>
+    <div class="header-divider"></div>
+  </div>
+
+  <!-- Budget Panel -->
+  <div class="budget-panel" id="budget-panel">
+    <div class="budget-label">PREIS GRAVITY CARD</div>
+    <div class="budget-row">
+      <div class="budget-input-wrap">
+        <span>X =</span>
+        <input type="number" id="budget-input" placeholder="0" oninput="onBudgetInput()" />
+      </div>
+      <button class="btn-budget-reset" onclick="resetBudget()">ZURÜCKSETZEN</button>
+    </div>
+    <div class="budget-remaining">
+      <span class="budget-remaining-label">VERBLEIBEND</span>
+      <span class="budget-remaining-value" id="budget-remaining">—</span>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards" id="cards-container"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">NEUE KATEGORIE</div>
+    <label>NAME</label>
+    <input type="text" id="input-name" placeholder="z.B. Kaffee, Kilometer..." />
+    <label>SCHRITTWERT (optional)</label>
+    <input type="number" id="input-step" value="1" />
+    <div class="hint">Jeder Klick addiert diesen Wert zur Summe.</div>
+    <label>FARBE</label>
+    <div class="color-picker" id="color-picker"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">ABBRECHEN</button>
+      <button class="btn-save" id="btn-save" onclick="saveCategory()">SPEICHERN</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Install Banner -->
+<div id="install-banner">
+  <span>Gravity Card Payback Counter zum Startbildschirm hinzufügen?</span>
+  <button id="btn-install" onclick="installPWA()">INSTALLIEREN</button>
+  <button id="btn-dismiss" onclick="dismissInstall()">✕</button>
+</div>
+
+<script>
+  const STORAGE_KEY = 'counter-app-categories';
+  const BUDGET_KEY = 'gravity-budget';
+  const COLORS = ['#c0703a','#3a7bc0','#7bc03a','#c03a7b','#3ac0b0','#c0b03a','#7b3ac0','#c03a3a'];
+
+  let categories = [];
+  let editingId = null;
+  let selectedColor = COLORS[0];
+  let deferredPrompt = null;
+  let budgetStart = null;   // the X value user entered
+  let budgetSpent = 0;      // total debited so far (sum of all + clicks * step, minus - clicks)
+
+  // Load from localStorage
+  function load() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      categories = stored ? JSON.parse(stored) : [
+        { id: 1, name: 'Kaffee', color: '#c0703a', step: 1, count: 0, sum: 0 },
+        { id: 2, name: 'Schritte', color: '#3a7bc0', step: 100, count: 0, sum: 0 },
+      ];
+    } catch { categories = []; }
+    try {
+      const b = localStorage.getItem(BUDGET_KEY);
+      if (b) {
+        const parsed = JSON.parse(b);
+        budgetStart = parsed.start;
+        budgetSpent = parsed.spent || 0;
+        if (budgetStart !== null) {
+          document.getElementById('budget-input').value = budgetStart;
+        }
+      }
+    } catch {}
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(categories)); } catch {}
+    try { localStorage.setItem(BUDGET_KEY, JSON.stringify({ start: budgetStart, spent: budgetSpent })); } catch {}
+  }
+
+  // Render
+  function render() {
+    const container = document.getElementById('cards-container');
+    if (categories.length === 0) {
+      container.innerHTML = '<div class="empty">KEINE KATEGORIEN · KLICK AUF "+ NEU"</div>';
+      return;
+    }
+    container.innerHTML = categories.map(cat => `
+      <div class="card" style="border:1px solid ${cat.color}33; box-shadow:0 0 30px ${cat.color}11;" id="card-${cat.id}">
+        <div class="card-header">
+          <div class="card-name-row">
+            <div class="dot" style="background:${cat.color}; box-shadow:0 0 8px ${cat.color};"></div>
+            <span class="card-name">${escHtml(cat.name)}</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-icon" onclick="openEdit(${cat.id})">✎</button>
+            <button class="btn-icon" onclick="deleteCategory(${cat.id})">✕</button>
+          </div>
+        </div>
+        <div class="counter-display">
+          <div class="counter-number" style="color:${cat.color}; text-shadow:0 0 20px ${cat.color}66;">${cat.count}</div>
+          ${cat.step !== 1 ? `<div class="counter-meta">Summe: <span style="color:${cat.color}; font-weight:bold;">${cat.sum > 0 ? '+' : ''}${cat.sum}</span> · Ticket Preis: ${cat.step > 0 ? '+' : ''}${cat.step}</div>` : ''}
+        </div>
+        <div class="btn-row">
+          <button class="btn-dec"
+            style="border:1px solid ${cat.color}55; color:${cat.color};"
+            onclick="decrement(${cat.id})"
+            onmouseenter="this.style.background='${cat.color}22'; this.style.borderColor='${cat.color}'"
+            onmouseleave="this.style.background='transparent'; this.style.borderColor='${cat.color}55'">−</button>
+          <button class="btn-inc"
+            style="background:${cat.color}22; border:1px solid ${cat.color}; color:${cat.color};"
+            onclick="increment(${cat.id})"
+            onmouseenter="this.style.background='${cat.color}44'; this.style.boxShadow='0 0 16px ${cat.color}55'"
+            onmouseleave="this.style.background='${cat.color}22'; this.style.boxShadow='none'">+</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderBudget() {
+    const el = document.getElementById('budget-remaining');
+    if (budgetStart === null || budgetStart === '') {
+      el.textContent = '—';
+      el.style.color = '#555';
+      return;
+    }
+    const remaining = budgetStart - budgetSpent;
+    const formatted = remaining % 1 === 0 ? remaining : remaining.toFixed(2);
+    el.textContent = (remaining > 0 ? '+' : '') + formatted;
+    if (remaining > 0) el.style.color = '#7bc03a';
+    else if (remaining < 0) el.style.color = '#c03a3a';
+    else el.style.color = '#555';
+  }
+
+  function onBudgetInput() {
+    const val = parseFloat(document.getElementById('budget-input').value);
+    budgetStart = isNaN(val) ? null : val;
+    save();
+    renderBudget();
+  }
+
+  function resetBudget() {
+    budgetSpent = 0;
+    budgetStart = null;
+    document.getElementById('budget-input').value = '';
+    save();
+    renderBudget();
+  }
+
+  // Counter actions
+  function increment(id) {
+    const cat = categories.find(c => c.id === id);
+    if (cat) budgetSpent += cat.step;  // + zählt vom Budget ab
+    categories = categories.map(c => c.id === id ? {...c, count: c.count+1, sum: c.sum+c.step} : c);
+    save(); render(); renderBudget();
+  }
+  function decrement(id) {
+    categories = categories.map(c => {
+      if (c.id !== id) return c;
+      const newCount = Math.max(0, c.count - 1);
+      const newSum = c.count > 0 ? c.sum - c.step : c.sum;
+      if (c.count > 0) budgetSpent -= c.step;  // - gibt dem Budget zurück
+      return {...c, count: newCount, sum: newSum};
+    });
+    save(); render(); renderBudget();
+  }
+  function deleteCategory(id) {
+    categories = categories.filter(c => c.id !== id);
+    save(); render();
+  }
+  function resetAll() {
+    budgetSpent = 0;
+    categories = categories.map(c => ({...c, count: 0, sum: 0}));
+    save(); render(); renderBudget();
+  }
+
+  // Modal
+  function buildColorPicker() {
+    const picker = document.getElementById('color-picker');
+    picker.innerHTML = COLORS.map(c => `
+      <div class="color-dot" style="background:${c};" onclick="selectColor('${c}')" id="cdot-${c.replace('#','')}"></div>
+    `).join('');
+    updateColorPicker();
+  }
+
+  function selectColor(c) {
+    selectedColor = c;
+    updateColorPicker();
+    document.getElementById('btn-save').style.background = c + '33';
+    document.getElementById('btn-save').style.border = '1px solid ' + c;
+    document.getElementById('btn-save').style.color = c;
+  }
+
+  function updateColorPicker() {
+    COLORS.forEach(c => {
+      const el = document.getElementById('cdot-' + c.replace('#',''));
+      if (el) el.style.boxShadow = c === selectedColor ? `0 0 0 3px #111, 0 0 0 5px ${c}` : 'none';
+    });
+  }
+
+  function openAdd() {
+    editingId = null;
+    selectedColor = COLORS[0];
+    document.getElementById('modal-title').textContent = 'NEUE KATEGORIE';
+    document.getElementById('input-name').value = '';
+    document.getElementById('input-step').value = '1';
+    buildColorPicker();
+    selectColor(COLORS[0]);
+    document.getElementById('modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('input-name').focus(), 50);
+  }
+
+  function openEdit(id) {
+    const cat = categories.find(c => c.id === id);
+    if (!cat) return;
+    editingId = id;
+    selectedColor = cat.color;
+    document.getElementById('modal-title').textContent = 'BEARBEITEN';
+    document.getElementById('input-name').value = cat.name;
+    document.getElementById('input-step').value = cat.step;
+    buildColorPicker();
+    selectColor(cat.color);
+    document.getElementById('modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('input-name').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    editingId = null;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  function saveCategory() {
+    const name = document.getElementById('input-name').value.trim();
+    const step = parseFloat(document.getElementById('input-step').value) || 1;
+    if (!name) return;
+
+    if (editingId !== null) {
+      categories = categories.map(c => c.id === editingId ? {...c, name, step, color: selectedColor} : c);
+    } else {
+      categories.push({ id: Date.now(), name, color: selectedColor, step, count: 0, sum: 0 });
+    }
+    save(); render(); closeModal();
+  }
+
+  // ── PIN Auth ────────────────────────────────────────────────────────────────
+  // SHA-256 hash of "1357" — never stored/compared in plaintext
+  const PIN_HASH = 'f3e055913a0b1eb0f07317896f9a1bc466b9a50db85a7f882f3ffde9ffb23aca';
+  const SESSION_KEY = 'gc_session';
+  const LOCKOUT_KEY = 'gc_lockout';
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_MS = 5 * 60 * 1000;
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  let pinInput = '';
+  let lockoutTimer = null;
+
+  function getLockout() {
+    try { return JSON.parse(localStorage.getItem(LOCKOUT_KEY)) || { attempts: 0, until: null }; } catch { return { attempts: 0, until: null }; }
+  }
+  function saveLockout(data) {
+    try { localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data)); } catch {}
+  }
+
+  function isLockedOut() {
+    const { until } = getLockout();
+    return until && Date.now() < until;
+  }
+
+  function applyLockout() {
+    const { until } = getLockout();
+    if (!until || Date.now() >= until) return;
+    setPinInputEnabled(false);
+    updateLockoutDisplay();
+    lockoutTimer = setInterval(() => {
+      if (Date.now() >= until) {
+        clearInterval(lockoutTimer);
+        saveLockout({ attempts: 0, until: null });
+        setPinInputEnabled(true);
+        document.getElementById('pin-error').textContent = '';
+      } else {
+        updateLockoutDisplay();
+      }
+    }, 1000);
+  }
+
+  function updateLockoutDisplay() {
+    const { until } = getLockout();
+    const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    document.getElementById('pin-error').textContent =
+      `GESPERRT – noch ${m}:${String(s).padStart(2, '0')} Min.`;
+  }
+
+  function setPinInputEnabled(enabled) {
+    document.querySelectorAll('.pin-btn').forEach(btn => {
+      btn.disabled = !enabled;
+      btn.style.opacity = enabled ? '' : '0.3';
+    });
+  }
+
+  function pinPress(digit) {
+    if (isLockedOut() || pinInput.length >= 4) return;
+    pinInput += digit;
+    updatePinDots();
+    if (pinInput.length === 4) setTimeout(checkPin, 120);
+  }
+
+  function pinDel() {
+    if (isLockedOut()) return;
+    pinInput = pinInput.slice(0, -1);
+    updatePinDots();
+    document.getElementById('pin-error').textContent = '';
+  }
+
+  function updatePinDots() {
+    for (let i = 0; i < 4; i++) {
+      document.getElementById('d' + i).classList.toggle('filled', i < pinInput.length);
+    }
+  }
+
+  async function checkPin() {
+    const hash = await sha256(pinInput);
+    if (hash === PIN_HASH) {
+      saveLockout({ attempts: 0, until: null });
+      try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
+      unlockApp();
+    } else {
+      const lockout = getLockout();
+      lockout.attempts = (lockout.attempts || 0) + 1;
+      if (lockout.attempts >= MAX_ATTEMPTS) {
+        lockout.until = Date.now() + LOCKOUT_MS;
+        saveLockout(lockout);
+        applyLockout();
+      } else {
+        saveLockout(lockout);
+        const left = MAX_ATTEMPTS - lockout.attempts;
+        document.getElementById('pin-error').textContent =
+          `FALSCHER PIN – noch ${left} Versuch${left === 1 ? '' : 'e'}`;
+      }
+      pinInput = '';
+      updatePinDots();
+      // Shake animation
+      const dots = document.querySelector('.pin-dots');
+      dots.style.transition = 'transform 0.05s';
+      let s = 0;
+      const shake = setInterval(() => {
+        dots.style.transform = `translateX(${s % 2 === 0 ? 8 : -8}px)`;
+        s++; if (s > 5) { clearInterval(shake); dots.style.transform = 'translateX(0)'; }
+      }, 60);
+    }
+  }
+
+  function unlockApp() {
+    document.getElementById('pin-screen').classList.add('hidden');
+    document.getElementById('main-app').style.display = 'block';
+    load(); render(); renderBudget();
+  }
+
+  // Check session on load
+  function initAuth() {
+    try {
+      if (sessionStorage.getItem(SESSION_KEY) === '1') { unlockApp(); return; }
+    } catch {}
+    if (isLockedOut()) applyLockout();
+  }
+
+  // Keyboard support for PIN
+  document.addEventListener('keydown', e => {
+    const pinVisible = !document.getElementById('pin-screen').classList.contains('hidden');
+    if (pinVisible) {
+      if (!isLockedOut()) {
+        if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+        if (e.key === 'Backspace') pinDel();
+      }
+      return;
+    }
+    if (e.key === 'Enter' && document.getElementById('modal').style.display !== 'none') saveCategory();
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── App Init ────────────────────────────────────────────────────────────────
+
+  // PWA Install
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').classList.add('visible');
+  });
+
+  function installPWA() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      dismissInstall();
+    });
+  }
+
+  function dismissInstall() {
+    document.getElementById('install-banner').classList.remove('visible');
+  }
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+
+  // Init
+  initAuth();
+</script>
+</body>
+</html>
