@@ -177,21 +177,6 @@ User registration and password management are handled via the local admin script
 - **Logout** — button in the app header; invalidates the session on the server
 - **Data isolation** — each user account has its own data; no cross-user access
 
-### User management (admin script)
-
-The `tools/manage.sh` script is local-only (gitignored). It requires `API_URL` in `.env` and `wrangler` to be installed and authenticated.
-
-```bash
-# Create a new user (prompts for password)
-bash tools/manage.sh create <username>
-
-# Reset a user's password (prompts for new password)
-bash tools/manage.sh reset-password <username>
-
-# Delete a user and all their data
-bash tools/manage.sh delete <username>
-```
-
 ---
 
 ## 🎿 Tickets
