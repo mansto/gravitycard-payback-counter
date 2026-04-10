@@ -1,4 +1,4 @@
-const CACHE = 'gravity-counter-v1';
+const CACHE = 'gravity-counter-v2';
 const ASSETS = [
   '/',
   '/index.html',

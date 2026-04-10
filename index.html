@@ -209,40 +209,47 @@
       transition: color 0.3s;
     }
 
-    /* PIN Screen */
-    #pin-screen {
+    /* Auth Screens */
+    #auth-wrap {
       position: fixed; inset: 0; background: #0d0d0d;
       background-image: radial-gradient(circle at 20% 20%, #1a1200 0%, transparent 50%),
                         radial-gradient(circle at 80% 80%, #001020 0%, transparent 50%);
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; z-index: 999; padding: 24px;
+      z-index: 999;
     }
-    #pin-screen.hidden { display: none; }
+    #auth-wrap.hidden { display: none; }
     .pin-logo { font-family: 'Bebas Neue', cursive; font-size: 36px; letter-spacing: 6px; color: #f0f0f0; line-height: 1; }
-    .pin-logo-sub { font-family: 'Bebas Neue', cursive; font-size: 36px; letter-spacing: 6px; color: #333; line-height: 1; margin-bottom: 40px; }
-    .pin-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 3px; color: #555; margin-bottom: 20px; }
-    .pin-dots { display: flex; gap: 14px; margin-bottom: 32px; }
-    .pin-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #333; background: transparent;
-      transition: background 0.15s, border-color 0.15s;
+    .pin-logo-sub { font-family: 'Bebas Neue', cursive; font-size: 36px; letter-spacing: 6px; color: #333; line-height: 1; margin-bottom: 32px; }
+    .auth-screen {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; padding: 24px;
     }
-    .pin-dot.filled { background: #c0703a; border-color: #c0703a; box-shadow: 0 0 8px #c0703a88; }
-    .pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; max-width: 280px; }
-    .pin-btn {
-      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 14px;
-      color: #f0f0f0; font-size: 22px; font-family: 'Bebas Neue', cursive;
-      letter-spacing: 2px; padding: 18px 0; cursor: pointer;
-      transition: all 0.12s; user-select: none;
+    .auth-screen.hidden { display: none; }
+    .auth-form { width: 100%; max-width: 320px; }
+    .auth-btn-primary {
+      width: 100%; padding: 14px 0; margin-top: 4px; margin-bottom: 16px;
+      background: #c0703a; border: none; border-radius: 12px;
+      color: #0d0d0d; font-family: 'Bebas Neue', cursive;
+      font-size: 18px; letter-spacing: 3px; cursor: pointer; transition: background 0.2s;
     }
-    .pin-btn:active { background: #252525; border-color: #444; transform: scale(0.96); }
-    .pin-btn.del { color: #555; font-size: 18px; }
-    .pin-btn.empty { visibility: hidden; }
-    .pin-error {
+    .auth-btn-primary:hover { background: #d4824a; }
+    .auth-btn-primary:disabled { background: #444; cursor: not-allowed; }
+    .auth-error {
       font-family: 'IBM Plex Mono', monospace; font-size: 12px;
-      color: #c03a3a; letter-spacing: 2px; margin-top: -16px; margin-bottom: 16px;
-      min-height: 18px; text-align: center;
+      color: #c03a3a; letter-spacing: 1px; min-height: 18px;
+      text-align: center; margin-bottom: 10px;
     }
+    .auth-success {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      color: #7bc03a; letter-spacing: 1px; text-align: center;
+      margin-bottom: 10px; line-height: 1.6;
+    }
+    .auth-links { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .auth-link {
+      background: none; border: none; color: #555;
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+      letter-spacing: 2px; cursor: pointer; transition: color 0.2s;
+    }
+    .auth-link:hover { color: #888; }
 
     /* Install banner */
     #install-banner {
@@ -263,32 +270,78 @@
   </style>
 </head>
 <body>
-<!-- PIN Screen -->
-<div id="pin-screen">
-  <div class="pin-logo">GRAVITY CARD</div>
-  <div class="pin-logo-sub">PAYBACK COUNTER</div>
-  <div class="pin-label">PIN EINGEBEN</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
+<!-- Auth Screens -->
+<div id="auth-wrap">
+
+  <!-- Login -->
+  <div id="login-screen" class="auth-screen">
+    <div class="pin-logo">GRAVITY CARD</div>
+    <div class="pin-logo-sub">PAYBACK COUNTER</div>
+    <div class="auth-form">
+      <div class="auth-error" id="login-error"></div>
+      <label>BENUTZERNAME</label>
+      <input type="text" id="login-username" autocomplete="username"
+             placeholder="username" autocapitalize="none" />
+      <label>PASSWORT</label>
+      <input type="password" id="login-password" autocomplete="current-password"
+             placeholder="••••••••" />
+      <button class="auth-btn-primary" id="btn-login" onclick="doLogin()">ANMELDEN</button>
+      <div class="auth-links">
+        <button class="auth-link" onclick="showScreen('forgot-screen')">PASSWORT VERGESSEN?</button>
+        <button class="auth-link" onclick="showScreen('register-screen')">KONTO ERSTELLEN</button>
+      </div>
+    </div>
   </div>
-  <div class="pin-error" id="pin-error"></div>
-  <div class="pin-pad">
-    <button class="pin-btn" onclick="pinPress('1')">1</button>
-    <button class="pin-btn" onclick="pinPress('2')">2</button>
-    <button class="pin-btn" onclick="pinPress('3')">3</button>
-    <button class="pin-btn" onclick="pinPress('4')">4</button>
-    <button class="pin-btn" onclick="pinPress('5')">5</button>
-    <button class="pin-btn" onclick="pinPress('6')">6</button>
-    <button class="pin-btn" onclick="pinPress('7')">7</button>
-    <button class="pin-btn" onclick="pinPress('8')">8</button>
-    <button class="pin-btn" onclick="pinPress('9')">9</button>
-    <button class="pin-btn empty" disabled></button>
-    <button class="pin-btn" onclick="pinPress('0')">0</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+
+  <!-- Register -->
+  <div id="register-screen" class="auth-screen hidden">
+    <div class="pin-logo">KONTO</div>
+    <div class="pin-logo-sub">ERSTELLEN</div>
+    <div class="auth-form">
+      <div class="auth-error" id="register-error"></div>
+      <label>BENUTZERNAME</label>
+      <input type="text" id="reg-username" autocomplete="username"
+             placeholder="min. 3 Zeichen, a-z 0-9" autocapitalize="none" />
+      <label>PASSWORT</label>
+      <input type="password" id="reg-password" autocomplete="new-password"
+             placeholder="min. 8 Zeichen" />
+      <button class="auth-btn-primary" id="btn-register" onclick="doRegister()">REGISTRIEREN</button>
+      <div class="auth-links">
+        <button class="auth-link" onclick="showScreen('login-screen')">ZURÜCK ZUM LOGIN</button>
+      </div>
+    </div>
   </div>
+
+  <!-- Forgot Password -->
+  <div id="forgot-screen" class="auth-screen hidden">
+    <div class="pin-logo">PASSWORT</div>
+    <div class="pin-logo-sub">ZURÜCKSETZEN</div>
+    <div class="auth-form">
+      <div class="auth-error" id="forgot-error"></div>
+      <div class="auth-success hidden" id="forgot-success"></div>
+      <label>BENUTZERNAME</label>
+      <input type="text" id="forgot-username" autocomplete="username"
+             placeholder="username" autocapitalize="none" />
+      <button class="auth-btn-primary" id="btn-forgot" onclick="doForgot()">LINK GENERIEREN</button>
+      <div class="auth-links">
+        <button class="auth-link" onclick="showScreen('login-screen')">ZURÜCK ZUM LOGIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password (shown when URL has ?reset=TOKEN) -->
+  <div id="reset-screen" class="auth-screen hidden">
+    <div class="pin-logo">NEUES</div>
+    <div class="pin-logo-sub">PASSWORT</div>
+    <div class="auth-form">
+      <div class="auth-error" id="reset-error"></div>
+      <label>NEUES PASSWORT</label>
+      <input type="password" id="reset-password" autocomplete="new-password"
+             placeholder="min. 8 Zeichen" />
+      <button class="auth-btn-primary" id="btn-reset" onclick="doReset()">PASSWORT SETZEN</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="app" id="main-app" style="display:none">
@@ -300,6 +353,7 @@
         <div class="title" style="color:#555">PAYBACK COUNTER</div>
       </div>
       <div class="btn-group">
+        <button class="btn-reset" onclick="doLogout()">LOGOUT</button>
         <button class="btn-reset" onclick="resetAll()">RESET ALL</button>
         <button class="btn-new" onclick="openAdd()">+ NEU</button>
       </div>
@@ -370,22 +424,19 @@
   let budgetSpent = 0;      // total debited so far (sum of all + clicks * step, minus - clicks)
 
   // ── API Storage ───────────────────────────────────────────────────────────
-  const API_URL   = 'https://gravity-counter-api.mstocker.workers.dev/';
-  const API_TOKEN = '4B4C8F583239856B2157DA9AF966';
+  const API_URL = 'https://gravity-counter-api.mstocker.workers.dev/';
 
   let saveTimeout = null;
 
   async function load() {
     try {
       const res = await fetch(API_URL, {
-        headers: { 'Authorization': 'Bearer ' + API_TOKEN }
+        headers: { 'Authorization': 'Bearer ' + getToken() }
       });
+      if (res.status === 401) { clearToken(); showAuth('login-screen'); return; }
       if (!res.ok) throw new Error('Load failed');
       const data = await res.json();
-      categories = data.categories || [
-        { id: 1, name: 'Kaffee', color: '#c0703a', step: 1, count: 0, sum: 0 },
-        { id: 2, name: 'Schritte', color: '#3a7bc0', step: 100, count: 0, sum: 0 },
-      ];
+      categories = data.categories || [];
       if (data.budget) {
         budgetStart = data.budget.start;
         budgetSpent = data.budget.spent || 0;
@@ -400,7 +451,8 @@
     clearTimeout(saveTimeout);
     fetch(API_URL, {
       method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + API_TOKEN, 'Content-Type': 'application/json' },
+      keepalive: true,
+      headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ categories, budget: { start: budgetStart, spent: budgetSpent } })
     }).catch(() => {});
   }
@@ -581,140 +633,143 @@
     save(); render(); closeModal();
   }
 
-  // ── PIN Auth ────────────────────────────────────────────────────────────────
-  // SHA-256 hash of "1357" — never stored/compared in plaintext
-  const PIN_HASH = 'f3e055913a0b1eb0f07317896f9a1bc466b9a50db85a7f882f3ffde9ffb23aca';
-  const SESSION_KEY = 'gc_session';
-  const LOCKOUT_KEY = 'gc_lockout';
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_MS = 5 * 60 * 1000;
+  // ── Auth ──────────────────────────────────────────────────────────────────────
+  const TOKEN_KEY = 'gc_auth_token';
 
-  async function sha256(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  function getToken() { return localStorage.getItem(TOKEN_KEY); }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+  function showScreen(id) {
+    document.querySelectorAll('.auth-screen').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
   }
 
-  let pinInput = '';
-  let lockoutTimer = null;
-
-  function getLockout() {
-    try { return JSON.parse(localStorage.getItem(LOCKOUT_KEY)) || { attempts: 0, until: null }; } catch { return { attempts: 0, until: null }; }
-  }
-  function saveLockout(data) {
-    try { localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data)); } catch {}
+  function showApp() {
+    document.getElementById('auth-wrap').classList.add('hidden');
+    document.getElementById('main-app').style.display = 'block';
   }
 
-  function isLockedOut() {
-    const { until } = getLockout();
-    return until && Date.now() < until;
+  function showAuth(screen = 'login-screen') {
+    document.getElementById('auth-wrap').classList.remove('hidden');
+    document.getElementById('main-app').style.display = 'none';
+    showScreen(screen);
   }
 
-  function applyLockout() {
-    const { until } = getLockout();
-    if (!until || Date.now() >= until) return;
-    setPinInputEnabled(false);
-    updateLockoutDisplay();
-    lockoutTimer = setInterval(() => {
-      if (Date.now() >= until) {
-        clearInterval(lockoutTimer);
-        saveLockout({ attempts: 0, until: null });
-        setPinInputEnabled(true);
-        document.getElementById('pin-error').textContent = '';
-      } else {
-        updateLockoutDisplay();
-      }
-    }, 1000);
+  async function apiPost(path, body) {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(API_URL + path, { method: 'POST', headers, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, status: res.status, data };
   }
 
-  function updateLockoutDisplay() {
-    const { until } = getLockout();
-    const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    document.getElementById('pin-error').textContent =
-      `GESPERRT – noch ${m}:${String(s).padStart(2, '0')} Min.`;
+  function setBtnLoading(id, loading, label) {
+    const btn = document.getElementById(id);
+    btn.disabled = loading;
+    btn.textContent = loading ? '...' : label;
   }
 
-  function setPinInputEnabled(enabled) {
-    document.querySelectorAll('.pin-btn').forEach(btn => {
-      btn.disabled = !enabled;
-      btn.style.opacity = enabled ? '' : '0.3';
-    });
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.color = '#c03a3a';
+    errEl.textContent = '';
+    if (!username || !password) { errEl.textContent = 'ALLE FELDER AUSFÜLLEN'; return; }
+    setBtnLoading('btn-login', true, 'ANMELDEN');
+    const { ok, data } = await apiPost('/login', { username, password });
+    setBtnLoading('btn-login', false, 'ANMELDEN');
+    if (ok) { setToken(data.token); await unlockApp(); }
+    else errEl.textContent = 'BENUTZERNAME ODER PASSWORT FALSCH';
   }
 
-  function pinPress(digit) {
-    if (isLockedOut() || pinInput.length >= 4) return;
-    pinInput += digit;
-    updatePinDots();
-    if (pinInput.length === 4) setTimeout(checkPin, 120);
+  async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim().toLowerCase();
+    const password = document.getElementById('reg-password').value;
+    const errEl = document.getElementById('register-error');
+    errEl.textContent = '';
+    if (!username || !password) { errEl.textContent = 'ALLE FELDER AUSFÜLLEN'; return; }
+    if (password.length < 8) { errEl.textContent = 'PASSWORT MIN. 8 ZEICHEN'; return; }
+    setBtnLoading('btn-register', true, 'REGISTRIEREN');
+    const { ok, data } = await apiPost('/register', { username, password });
+    setBtnLoading('btn-register', false, 'REGISTRIEREN');
+    if (ok) { setToken(data.token); await unlockApp(); }
+    else if (data.error === 'USERNAME_TAKEN') errEl.textContent = 'BENUTZERNAME BEREITS VERGEBEN';
+    else if (data.error === 'USERNAME_INVALID') errEl.textContent = 'BENUTZERNAME: NUR a-z, 0-9, -, _ (MIN. 3)';
+    else errEl.textContent = 'FEHLER — BITTE ERNEUT VERSUCHEN';
   }
 
-  function pinDel() {
-    if (isLockedOut()) return;
-    pinInput = pinInput.slice(0, -1);
-    updatePinDots();
-    document.getElementById('pin-error').textContent = '';
-  }
-
-  function updatePinDots() {
-    for (let i = 0; i < 4; i++) {
-      document.getElementById('d' + i).classList.toggle('filled', i < pinInput.length);
-    }
-  }
-
-  async function checkPin() {
-    const hash = await sha256(pinInput);
-    if (hash === PIN_HASH) {
-      saveLockout({ attempts: 0, until: null });
-      try { sessionStorage.setItem(SESSION_KEY, '1'); } catch {}
-      unlockApp();
+  async function doForgot() {
+    const username = document.getElementById('forgot-username').value.trim().toLowerCase();
+    const errEl = document.getElementById('forgot-error');
+    const successEl = document.getElementById('forgot-success');
+    errEl.textContent = ''; successEl.classList.add('hidden');
+    if (!username) { errEl.textContent = 'BENUTZERNAME EINGEBEN'; return; }
+    setBtnLoading('btn-forgot', true, 'LINK GENERIEREN');
+    const { ok, data } = await apiPost('/reset-request', { username });
+    setBtnLoading('btn-forgot', false, 'LINK GENERIEREN');
+    if (ok) {
+      const resetUrl = location.origin + location.pathname + '?reset=' + data.token;
+      successEl.textContent = 'LINK GENERIERT — WEITERLEITUNG...';
+      successEl.classList.remove('hidden');
+      setTimeout(() => { location.href = resetUrl; }, 800);
     } else {
-      const lockout = getLockout();
-      lockout.attempts = (lockout.attempts || 0) + 1;
-      if (lockout.attempts >= MAX_ATTEMPTS) {
-        lockout.until = Date.now() + LOCKOUT_MS;
-        saveLockout(lockout);
-        applyLockout();
-      } else {
-        saveLockout(lockout);
-        const left = MAX_ATTEMPTS - lockout.attempts;
-        document.getElementById('pin-error').textContent =
-          `FALSCHER PIN – noch ${left} Versuch${left === 1 ? '' : 'e'}`;
-      }
-      pinInput = '';
-      updatePinDots();
-      // Shake animation
-      const dots = document.querySelector('.pin-dots');
-      dots.style.transition = 'transform 0.05s';
-      let s = 0;
-      const shake = setInterval(() => {
-        dots.style.transform = `translateX(${s % 2 === 0 ? 8 : -8}px)`;
-        s++; if (s > 5) { clearInterval(shake); dots.style.transform = 'translateX(0)'; }
-      }, 60);
+      errEl.textContent = 'BENUTZERNAME NICHT GEFUNDEN';
     }
+  }
+
+  async function doReset() {
+    const token = new URLSearchParams(location.search).get('reset');
+    const password = document.getElementById('reset-password').value;
+    const errEl = document.getElementById('reset-error');
+    errEl.textContent = '';
+    if (!password || password.length < 8) { errEl.textContent = 'PASSWORT MIN. 8 ZEICHEN'; return; }
+    setBtnLoading('btn-reset', true, 'PASSWORT SETZEN');
+    const { ok, data } = await apiPost('/reset-confirm', { token, password });
+    setBtnLoading('btn-reset', false, 'PASSWORT SETZEN');
+    if (ok) {
+      history.replaceState(null, '', location.pathname);
+      showAuth('login-screen');
+      const errLogin = document.getElementById('login-error');
+      errLogin.style.color = '#7bc03a';
+      errLogin.textContent = 'PASSWORT GEÄNDERT — BITTE ANMELDEN';
+    } else {
+      errEl.textContent = data.error === 'TOKEN_INVALID_OR_EXPIRED'
+        ? 'LINK ABGELAUFEN — NEUEN LINK ANFORDERN'
+        : 'FEHLER — BITTE ERNEUT VERSUCHEN';
+    }
+  }
+
+  async function doLogout() {
+    await apiPost('/logout', {}).catch(() => {});
+    clearToken();
+    showAuth('login-screen');
   }
 
   async function unlockApp() {
-    document.getElementById('pin-screen').classList.add('hidden');
-    document.getElementById('main-app').style.display = 'block';
+    showApp();
     await load(); render(); renderBudget();
   }
 
-  // Check session on load
-  function initAuth() {
-    try {
-      if (sessionStorage.getItem(SESSION_KEY) === '1') { unlockApp(); return; }
-    } catch {}
-    if (isLockedOut()) applyLockout();
+  async function initAuth() {
+    const resetToken = new URLSearchParams(location.search).get('reset');
+    if (resetToken) { showAuth('reset-screen'); return; }
+    const token = getToken();
+    if (token) { showApp(); await load(); render(); renderBudget(); return; }
+    showAuth('login-screen');
   }
 
-  // Keyboard support for PIN
+  // Keyboard support
   document.addEventListener('keydown', e => {
-    const pinVisible = !document.getElementById('pin-screen').classList.contains('hidden');
-    if (pinVisible) {
-      if (!isLockedOut()) {
-        if (e.key >= '0' && e.key <= '9') pinPress(e.key);
-        if (e.key === 'Backspace') pinDel();
+    const authVisible = !document.getElementById('auth-wrap').classList.contains('hidden');
+    if (authVisible) {
+      if (e.key === 'Enter') {
+        if (!document.getElementById('login-screen').classList.contains('hidden')) doLogin();
+        else if (!document.getElementById('register-screen').classList.contains('hidden')) doRegister();
+        else if (!document.getElementById('forgot-screen').classList.contains('hidden')) doForgot();
+        else if (!document.getElementById('reset-screen').classList.contains('hidden')) doReset();
       }
       return;
     }
