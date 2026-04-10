@@ -360,8 +360,6 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'counter-app-categories';
-  const BUDGET_KEY = 'gravity-budget';
   const COLORS = ['#c0703a','#3a7bc0','#7bc03a','#c03a7b','#3ac0b0','#c0b03a','#7b3ac0','#c03a3a'];
 
   let categories = [];
@@ -371,83 +369,45 @@
   let budgetStart = null;   // the X value user entered
   let budgetSpent = 0;      // total debited so far (sum of all + clicks * step, minus - clicks)
 
-  // ── IndexedDB Storage ──────────────────────────────────────────────────
-  // IndexedDB has stronger persistence guarantees than localStorage on
-  // Android Firefox — localStorage can be evicted on browser restart.
-  const DB_NAME = 'gravity-counter';
-  const DB_STORE = 'data';
+  // ── API Storage ───────────────────────────────────────────────────────────
+  const API_URL   = '__API_URL__';
+  const API_TOKEN = '__API_TOKEN__';
 
-  function openDB(retries = 2) {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
-      req.onsuccess = e => resolve(e.target.result);
-      req.onerror = () => {
-        if (retries > 0) {
-          setTimeout(() => openDB(retries - 1).then(resolve, reject), 300);
-        } else {
-          reject(req.error);
-        }
-      };
-    });
-  }
+  let saveTimeout = null;
 
-  async function dbGet(key) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async function dbSet(key, value) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(DB_STORE, 'readwrite');
-      tx.objectStore(DB_STORE).put(value, key);
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  // Load from IndexedDB (migrates localStorage data on first run)
   async function load() {
     try {
-      const lsCats = localStorage.getItem(STORAGE_KEY);
-      if (lsCats) {
-        try { await dbSet(STORAGE_KEY, JSON.parse(lsCats)); } catch {}
-        localStorage.removeItem(STORAGE_KEY);
-      }
-      const stored = await dbGet(STORAGE_KEY);
-      categories = stored || [
+      const res = await fetch(API_URL, {
+        headers: { 'Authorization': 'Bearer ' + API_TOKEN }
+      });
+      if (!res.ok) throw new Error('Load failed');
+      const data = await res.json();
+      categories = data.categories || [
         { id: 1, name: 'Kaffee', color: '#c0703a', step: 1, count: 0, sum: 0 },
         { id: 2, name: 'Schritte', color: '#3a7bc0', step: 100, count: 0, sum: 0 },
       ];
-    } catch { if (categories.length === 0) categories = [
-      { id: 1, name: 'Kaffee', color: '#c0703a', step: 1, count: 0, sum: 0 },
-      { id: 2, name: 'Schritte', color: '#3a7bc0', step: 100, count: 0, sum: 0 },
-    ]; }
-    try {
-      const lsBudget = localStorage.getItem(BUDGET_KEY);
-      if (lsBudget) {
-        try { await dbSet(BUDGET_KEY, JSON.parse(lsBudget)); } catch {}
-        localStorage.removeItem(BUDGET_KEY);
-      }
-      const b = await dbGet(BUDGET_KEY);
-      if (b) {
-        budgetStart = b.start;
-        budgetSpent = b.spent || 0;
+      if (data.budget) {
+        budgetStart = data.budget.start;
+        budgetSpent = data.budget.spent || 0;
         if (budgetStart !== null) {
           document.getElementById('budget-input').value = budgetStart;
         }
       }
-    } catch {}
+    } catch { categories = []; }
+  }
+
+  function flushSave() {
+    clearTimeout(saveTimeout);
+    fetch(API_URL, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + API_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories, budget: { start: budgetStart, spent: budgetSpent } })
+    }).catch(() => {});
   }
 
   function save() {
-    dbSet(STORAGE_KEY, categories).catch(() => {});
-    dbSet(BUDGET_KEY, { start: budgetStart, spent: budgetSpent }).catch(() => {});
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(flushSave, 800);
   }
 
   // Render
@@ -791,16 +751,11 @@
     });
   }
 
-  // Request persistent storage so Android Firefox doesn't evict localStorage
-  if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist();
-  }
-
-  // Save when page is hidden (Android app switch / browser close)
+  // Save immediately when page is hidden (don't wait for debounce)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden' &&
         document.getElementById('main-app').style.display !== 'none') {
-      save();
+      flushSave();
     }
   });
 

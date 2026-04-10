@@ -1,0 +1,7 @@
+name = "gravity-counter-api"
+main = "worker.js"
+compatibility_date = "2024-01-15"
+
+[[kv_namespaces]]
+binding = "GRAVITY_KV"
+id = "REPLACE_WITH_YOUR_KV_ID"

@@ -1,0 +1,11 @@
+{
+  "name": "gravitycard-payback-counter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
