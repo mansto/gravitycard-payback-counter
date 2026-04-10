@@ -22,7 +22,7 @@ async function hashPassword(password) {
     'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
   );
   const hash = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 200_000 }, key, 256
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10_000 }, key, 256
   );
   const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
   return `pbkdf2:v1:${b64(salt)}:${b64(hash)}`;
@@ -36,7 +36,7 @@ async function verifyPassword(password, stored) {
     'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
   );
   const hash = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 200_000 }, key, 256
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 10_000 }, key, 256
   );
   const a = new Uint8Array(hash);
   const b = Uint8Array.from(atob(parts[3]), c => c.charCodeAt(0));
