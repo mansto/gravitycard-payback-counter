@@ -374,6 +374,7 @@
   const API_URL = 'https://gravity-counter-api.mstocker.workers.dev/'.replace(/\/$/, '');
 
   let saveTimeout = null;
+  let syncInterval = null;
 
   async function load() {
     try {
@@ -407,6 +408,22 @@
   function save() {
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(flushSave, 800);
+  }
+
+  function startSync() {
+    stopSync();
+    syncInterval = setInterval(async () => {
+      if (saveTimeout !== null) return;
+      if (document.visibilityState === 'hidden') return;
+      await load();
+      render();
+      renderBudget();
+    }, 10_000);
+  }
+
+  function stopSync() {
+    clearInterval(syncInterval);
+    syncInterval = null;
   }
 
   // Render
@@ -633,6 +650,7 @@
   }
 
   async function doLogout() {
+    stopSync();
     await apiPost('/logout', {}).catch(() => {});
     clearToken();
     showAuth('login-screen');
@@ -641,11 +659,12 @@
   async function unlockApp() {
     showApp();
     await load(); render(); renderBudget();
+    startSync();
   }
 
   async function initAuth() {
     const token = getToken();
-    if (token) { showApp(); await load(); render(); renderBudget(); return; }
+    if (token) { await unlockApp(); return; }
     showAuth('login-screen');
   }
 
