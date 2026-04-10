@@ -23,6 +23,8 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html { overflow-x: hidden; }
+
     body {
       background: #0d0d0d;
       background-image:
@@ -31,6 +33,7 @@
       min-height: 100vh;
       font-family: 'IBM Plex Mono', monospace;
       color: #f0f0f0;
+      overflow-x: hidden;
       padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     }
 
@@ -85,12 +88,12 @@
     .card-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
     .btn-dec {
-      padding: 6px 14px; background: transparent;
+      padding: 6px 12px; background: transparent;
       border-radius: 10px; font-size: 20px;
       cursor: pointer; transition: all 0.15s; font-family: 'Bebas Neue', cursive;
     }
     .btn-inc {
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 10px; font-size: 20px;
       cursor: pointer; transition: all 0.15s; font-family: 'Bebas Neue', cursive;
     }
@@ -101,6 +104,14 @@
     }
 
     .card-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+    @media (max-width: 360px) {
+      .app { padding: 12px 10px 80px; }
+      .card { gap: 7px; padding: 10px 10px; }
+      .btn-dec, .btn-inc { padding: 6px 8px; font-size: 18px; }
+      .counter-number { font-size: 26px; min-width: 30px; }
+      .card-controls { gap: 4px; }
+    }
 
     .btn-icon {
       background: none; border: 1px solid #2a2a2a; border-radius: 7px;
