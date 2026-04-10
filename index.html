@@ -286,39 +286,6 @@
       <input type="password" id="login-password" autocomplete="current-password"
              placeholder="••••••••" />
       <button class="auth-btn-primary" id="btn-login" onclick="doLogin()">ANMELDEN</button>
-      <div class="auth-links">
-        <button class="auth-link" onclick="showScreen('forgot-screen')">PASSWORT VERGESSEN?</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Forgot Password -->
-  <div id="forgot-screen" class="auth-screen hidden">
-    <div class="pin-logo">PASSWORT</div>
-    <div class="pin-logo-sub">ZURÜCKSETZEN</div>
-    <div class="auth-form">
-      <div class="auth-error" id="forgot-error"></div>
-      <div class="auth-success hidden" id="forgot-success"></div>
-      <label>BENUTZERNAME</label>
-      <input type="text" id="forgot-username" autocomplete="username"
-             placeholder="username" autocapitalize="none" />
-      <button class="auth-btn-primary" id="btn-forgot" onclick="doForgot()">LINK GENERIEREN</button>
-      <div class="auth-links">
-        <button class="auth-link" onclick="showScreen('login-screen')">ZURÜCK ZUM LOGIN</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reset Password (shown when URL has ?reset=TOKEN) -->
-  <div id="reset-screen" class="auth-screen hidden">
-    <div class="pin-logo">NEUES</div>
-    <div class="pin-logo-sub">PASSWORT</div>
-    <div class="auth-form">
-      <div class="auth-error" id="reset-error"></div>
-      <label>NEUES PASSWORT</label>
-      <input type="password" id="reset-password" autocomplete="new-password"
-             placeholder="min. 8 Zeichen" />
-      <button class="auth-btn-primary" id="btn-reset" onclick="doReset()">PASSWORT SETZEN</button>
     </div>
   </div>
 
@@ -665,47 +632,6 @@
     else errEl.textContent = 'BENUTZERNAME ODER PASSWORT FALSCH';
   }
 
-  async function doForgot() {
-    const username = document.getElementById('forgot-username').value.trim().toLowerCase();
-    const errEl = document.getElementById('forgot-error');
-    const successEl = document.getElementById('forgot-success');
-    errEl.textContent = ''; successEl.classList.add('hidden');
-    if (!username) { errEl.textContent = 'BENUTZERNAME EINGEBEN'; return; }
-    setBtnLoading('btn-forgot', true, 'LINK GENERIEREN');
-    const { ok, data } = await apiPost('/reset-request', { username });
-    setBtnLoading('btn-forgot', false, 'LINK GENERIEREN');
-    if (ok) {
-      const resetUrl = location.origin + location.pathname + '?reset=' + data.token;
-      successEl.textContent = 'LINK GENERIERT — WEITERLEITUNG...';
-      successEl.classList.remove('hidden');
-      setTimeout(() => { location.href = resetUrl; }, 800);
-    } else {
-      errEl.textContent = 'BENUTZERNAME NICHT GEFUNDEN';
-    }
-  }
-
-  async function doReset() {
-    const token = new URLSearchParams(location.search).get('reset');
-    const password = document.getElementById('reset-password').value;
-    const errEl = document.getElementById('reset-error');
-    errEl.textContent = '';
-    if (!password || password.length < 8) { errEl.textContent = 'PASSWORT MIN. 8 ZEICHEN'; return; }
-    setBtnLoading('btn-reset', true, 'PASSWORT SETZEN');
-    const { ok, data } = await apiPost('/reset-confirm', { token, password });
-    setBtnLoading('btn-reset', false, 'PASSWORT SETZEN');
-    if (ok) {
-      history.replaceState(null, '', location.pathname);
-      showAuth('login-screen');
-      const errLogin = document.getElementById('login-error');
-      errLogin.style.color = '#7bc03a';
-      errLogin.textContent = 'PASSWORT GEÄNDERT — BITTE ANMELDEN';
-    } else {
-      errEl.textContent = data.error === 'TOKEN_INVALID_OR_EXPIRED'
-        ? 'LINK ABGELAUFEN — NEUEN LINK ANFORDERN'
-        : 'FEHLER — BITTE ERNEUT VERSUCHEN';
-    }
-  }
-
   async function doLogout() {
     await apiPost('/logout', {}).catch(() => {});
     clearToken();
@@ -718,8 +644,6 @@
   }
 
   async function initAuth() {
-    const resetToken = new URLSearchParams(location.search).get('reset');
-    if (resetToken) { showAuth('reset-screen'); return; }
     const token = getToken();
     if (token) { showApp(); await load(); render(); renderBudget(); return; }
     showAuth('login-screen');
@@ -731,8 +655,6 @@
     if (authVisible) {
       if (e.key === 'Enter') {
         if (!document.getElementById('login-screen').classList.contains('hidden')) doLogin();
-        else if (!document.getElementById('forgot-screen').classList.contains('hidden')) doForgot();
-        else if (!document.getElementById('reset-screen').classList.contains('hidden')) doReset();
       }
       return;
     }
