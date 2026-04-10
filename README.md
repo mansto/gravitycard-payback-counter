@@ -19,8 +19,7 @@
 |---|---|
 | 🎿 **Ticket Counters** | Create custom ticket categories, each with its own color and price |
 | 💰 **Budget Tracking** | Set the Gravity Card price and watch your remaining balance update in real time |
-| 🔐 **User Accounts** | Register with username and password — each user sees only their own data |
-| 🔑 **Password Reset** | Forgot your password? Generate a reset link directly in the browser |
+| 🔐 **User Accounts** | Login with username and password — each user sees only their own data |
 | 📱 **Installable PWA** | Add to home screen on iOS and Android for a native app experience |
 | ☁️ **Cloud Storage** | All data stored in Cloudflare KV — reliable across browser restarts and devices |
 
@@ -30,7 +29,7 @@
 
 ```
 ┌─────────────────────────────┐
-│   🔐 Login / Register       │  Username + password · password reset
+│   🔐 Login                  │  Username + password
 ├─────────────────────────────┤
 │   💳 Budget Panel           │  Set Gravity Card price · live remaining balance in €
 ├─────────────────────────────┤
@@ -65,6 +64,8 @@
 │   ├── icon-192.jpg    # App icon
 │   └── icon-512.jpg    # App icon (large)
 ├── dist/               # Built output (gitignored) — deployed to GitHub Pages
+├── tools/              # Local admin scripts (gitignored)
+│   └── manage.sh       # User management: create / delete / reset-password
 ├── worker.js           # Cloudflare Worker (auth endpoints + KV storage)
 ├── wrangler.toml       # Cloudflare Workers configuration
 ├── build.js            # Build script: injects API_URL + copies assets to dist/
@@ -170,11 +171,26 @@ npx serve dist
 
 ## 🔐 User Accounts
 
-- **Register** — choose a username (a–z, 0–9, `_`, `-`) and a password (min. 8 characters)
+User registration and password management are handled via the local admin script — there is no self-service registration in the app UI.
+
 - **Login** — session is stored in `localStorage` and lasts 7 days
 - **Logout** — button in the app header; invalidates the session on the server
-- **Password reset** — enter your username on the "Passwort vergessen" screen; a reset link is generated and the browser redirects automatically (link expires after 1 hour)
 - **Data isolation** — each user account has its own data; no cross-user access
+
+### User management (admin script)
+
+The `tools/manage.sh` script is local-only (gitignored). It requires `API_URL` in `.env` and `wrangler` to be installed and authenticated.
+
+```bash
+# Create a new user (prompts for password)
+bash tools/manage.sh create <username>
+
+# Reset a user's password (prompts for new password)
+bash tools/manage.sh reset-password <username>
+
+# Delete a user and all their data
+bash tools/manage.sh delete <username>
+```
 
 ---
 
