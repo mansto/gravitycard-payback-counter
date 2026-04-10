@@ -288,26 +288,6 @@
       <button class="auth-btn-primary" id="btn-login" onclick="doLogin()">ANMELDEN</button>
       <div class="auth-links">
         <button class="auth-link" onclick="showScreen('forgot-screen')">PASSWORT VERGESSEN?</button>
-        <button class="auth-link" onclick="showScreen('register-screen')">KONTO ERSTELLEN</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Register -->
-  <div id="register-screen" class="auth-screen hidden">
-    <div class="pin-logo">KONTO</div>
-    <div class="pin-logo-sub">ERSTELLEN</div>
-    <div class="auth-form">
-      <div class="auth-error" id="register-error"></div>
-      <label>BENUTZERNAME</label>
-      <input type="text" id="reg-username" autocomplete="username"
-             placeholder="min. 3 Zeichen, a-z 0-9" autocapitalize="none" />
-      <label>PASSWORT</label>
-      <input type="password" id="reg-password" autocomplete="new-password"
-             placeholder="min. 8 Zeichen" />
-      <button class="auth-btn-primary" id="btn-register" onclick="doRegister()">REGISTRIEREN</button>
-      <div class="auth-links">
-        <button class="auth-link" onclick="showScreen('login-screen')">ZURÜCK ZUM LOGIN</button>
       </div>
     </div>
   </div>
@@ -685,22 +665,6 @@
     else errEl.textContent = 'BENUTZERNAME ODER PASSWORT FALSCH';
   }
 
-  async function doRegister() {
-    const username = document.getElementById('reg-username').value.trim().toLowerCase();
-    const password = document.getElementById('reg-password').value;
-    const errEl = document.getElementById('register-error');
-    errEl.textContent = '';
-    if (!username || !password) { errEl.textContent = 'ALLE FELDER AUSFÜLLEN'; return; }
-    if (password.length < 8) { errEl.textContent = 'PASSWORT MIN. 8 ZEICHEN'; return; }
-    setBtnLoading('btn-register', true, 'REGISTRIEREN');
-    const { ok, data } = await apiPost('/register', { username, password });
-    setBtnLoading('btn-register', false, 'REGISTRIEREN');
-    if (ok) { setToken(data.token); await unlockApp(); }
-    else if (data.error === 'USERNAME_TAKEN') errEl.textContent = 'BENUTZERNAME BEREITS VERGEBEN';
-    else if (data.error === 'USERNAME_INVALID') errEl.textContent = 'BENUTZERNAME: NUR a-z, 0-9, -, _ (MIN. 3)';
-    else errEl.textContent = 'FEHLER — BITTE ERNEUT VERSUCHEN';
-  }
-
   async function doForgot() {
     const username = document.getElementById('forgot-username').value.trim().toLowerCase();
     const errEl = document.getElementById('forgot-error');
@@ -767,7 +731,6 @@
     if (authVisible) {
       if (e.key === 'Enter') {
         if (!document.getElementById('login-screen').classList.contains('hidden')) doLogin();
-        else if (!document.getElementById('register-screen').classList.contains('hidden')) doRegister();
         else if (!document.getElementById('forgot-screen').classList.contains('hidden')) doForgot();
         else if (!document.getElementById('reset-screen').classList.contains('hidden')) doReset();
       }
