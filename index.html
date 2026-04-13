@@ -64,6 +64,25 @@
     }
     .btn-new:hover { background: #fff; }
 
+    /* Season row */
+    .season-row {
+      display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    }
+    .btn-season-nav {
+      background: transparent; border: 1px solid #2a2a2a; border-radius: 8px;
+      color: #555; padding: 5px 10px; cursor: pointer; font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-season-nav:hover:not(:disabled) { border-color: #444; color: #888; }
+    .btn-season-nav:disabled { opacity: 0.2; cursor: not-allowed; }
+    .season-label-btn {
+      background: transparent; border: 1px solid #333; border-radius: 10px;
+      color: #f0f0f0; padding: 5px 14px; cursor: pointer;
+      font-family: 'Bebas Neue', cursive; font-size: 15px; letter-spacing: 3px;
+      transition: all 0.2s; flex: 1; text-align: center;
+    }
+    .season-label-btn:hover { border-color: #555; background: #1a1a1a; }
+
     /* Cards grid */
     .cards { max-width: 520px; margin: 0 auto; display: grid; gap: 8px; }
 
@@ -145,6 +164,15 @@
     }
     input:focus { border-color: #555; }
 
+    select {
+      width: 100%; background: #1a1a1a; border: 1px solid #333;
+      border-radius: 10px; padding: 12px 14px; color: #f0f0f0;
+      font-size: 15px; font-family: monospace; outline: none;
+      margin-bottom: 14px; transition: border-color 0.2s;
+      appearance: none; cursor: pointer;
+    }
+    select:focus { border-color: #555; }
+
     .hint { font-size: 12px; color: #555; font-family: monospace; margin-top: -10px; margin-bottom: 16px; }
 
     .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -207,6 +235,56 @@
     .budget-remaining-value {
       font-family: 'Bebas Neue', cursive; font-size: 24px; letter-spacing: 3px;
       transition: color 0.3s;
+    }
+
+    /* Season Manager Modal */
+    .season-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 16px;
+    }
+    .season-edit-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 110; padding: 16px;
+    }
+    .season-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 20px; }
+    .season-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px;
+      padding: 10px 14px;
+    }
+    .season-item.is-active { border-color: #444; }
+    .season-item-year {
+      font-family: 'Bebas Neue', cursive; font-size: 20px; letter-spacing: 3px;
+      flex: 1;
+    }
+    .season-badge {
+      font-size: 10px; letter-spacing: 2px; color: #7bc03a;
+      border: 1px solid #7bc03a44; border-radius: 6px; padding: 2px 6px;
+    }
+    .season-item-actions { display: flex; gap: 6px; align-items: center; }
+    .btn-season-switch {
+      background: transparent; border: 1px solid #2a2a2a; border-radius: 8px;
+      color: #555; padding: 4px 10px; cursor: pointer; font-size: 10px;
+      letter-spacing: 2px; font-family: 'IBM Plex Mono', monospace; transition: all 0.2s;
+    }
+    .btn-season-switch:hover { border-color: #444; color: #888; }
+    .season-error {
+      font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+      color: #c03a3a; letter-spacing: 1px; min-height: 18px;
+      margin-bottom: 10px;
+    }
+    .import-checkbox-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; cursor: pointer;
+    }
+    .import-checkbox-row input[type="checkbox"] {
+      width: auto; margin-bottom: 0; cursor: pointer;
+      accent-color: #c0703a;
+    }
+    .import-checkbox-label {
+      color: #888; font-size: 12px; letter-spacing: 1px; cursor: pointer;
     }
 
     /* Auth Screens */
@@ -305,6 +383,12 @@
         <button class="btn-new" onclick="openAdd()">+ NEU</button>
       </div>
     </div>
+    <!-- Season row -->
+    <div class="season-row">
+      <button class="btn-season-nav" id="btn-prev-season" onclick="prevSeason()" disabled>◀</button>
+      <button class="season-label-btn" onclick="openSeasonManager()">SAISON <span id="season-year">—</span></button>
+      <button class="btn-season-nav" id="btn-next-season" onclick="nextSeason()" disabled>▶</button>
+    </div>
     <div class="header-divider"></div>
   </div>
 
@@ -330,7 +414,7 @@
   <div class="cards" id="cards-container"></div>
 </div>
 
-<!-- Modal -->
+<!-- Ticket Modal -->
 <div class="modal-overlay" id="modal" style="display:none" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-title" id="modal-title">NEUES TICKET</div>
@@ -351,6 +435,41 @@
   </div>
 </div>
 
+<!-- Season Manager Modal -->
+<div class="season-modal-overlay" id="season-modal" style="display:none" onclick="handleSeasonOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">SAISONS</div>
+    <div class="season-list" id="season-list"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSeasonModal()">SCHLIESSEN</button>
+      <button class="btn-new" onclick="openCreateSeason()">+ NEU</button>
+    </div>
+  </div>
+</div>
+
+<!-- Season Edit Modal (create / edit) -->
+<div class="season-edit-overlay" id="season-edit-modal" style="display:none" onclick="handleSeasonEditOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="season-edit-title">NEUE SAISON</div>
+    <div class="season-error" id="season-error"></div>
+    <label>JAHR</label>
+    <input type="number" id="input-season-year" placeholder="z.B. 2026" min="2000" max="2100" />
+    <div id="import-section">
+      <div class="import-checkbox-row" onclick="document.getElementById('import-check').click()">
+        <input type="checkbox" id="import-check" onclick="event.stopPropagation(); toggleImportSection()" />
+        <span class="import-checkbox-label">TICKETS VON VORJAHR IMPORTIEREN</span>
+      </div>
+      <div id="import-from-wrap" style="display:none">
+        <label>VON SAISON</label>
+        <select id="import-from-season"></select>
+      </div>
+    </div>
+    <div class="modal-footer" style="margin-top: 6px;">
+      <button class="btn-cancel" onclick="closeSeasonEditModal()">ABBRECHEN</button>
+      <button class="btn-save" id="btn-season-save" onclick="saveSeason()"
+        style="background:#f0f0f022; border:1px solid #f0f0f0; color:#f0f0f0;">SPEICHERN</button>
+    </div>
+  </div>
 </div>
 
 <!-- Install Banner -->
@@ -363,14 +482,41 @@
 <script>
   const COLORS = ['#c0703a','#3a7bc0','#7bc03a','#c03a7b','#3ac0b0','#c0b03a','#7b3ac0','#c03a3a'];
 
+  // ── State ─────────────────────────────────────────────────────────────────────
+  let seasons = {};        // { [year]: { year, categories, budget } }
+  let activeSeason = null; // number (year)
+  let editingSeasonYear = null; // null = creating new season
+
+  // View into active season (kept in sync)
   let categories = [];
   let editingId = null;
   let selectedColor = COLORS[0];
   let deferredPrompt = null;
-  let budgetStart = null;   // the X value user entered
-  let budgetSpent = 0;      // total debited so far (sum of all + clicks * step, minus - clicks)
+  let budgetStart = null;
+  let budgetSpent = 0;
 
-  // ── API Storage ───────────────────────────────────────────────────────────
+  // ── Season Helpers ─────────────────────────────────────────────────────────────
+  function getSortedSeasonYears() {
+    return Object.keys(seasons).map(Number).sort((a, b) => a - b);
+  }
+
+  function syncFromActiveSeason() {
+    const s = seasons[activeSeason];
+    if (!s) return;
+    categories = s.categories || [];
+    budgetStart = s.budget ? s.budget.start : null;
+    budgetSpent = s.budget ? (s.budget.spent || 0) : 0;
+    const inp = document.getElementById('budget-input');
+    if (inp) inp.value = (budgetStart !== null && budgetStart !== undefined) ? budgetStart : '';
+  }
+
+  function syncToActiveSeason() {
+    if (!activeSeason || !seasons[activeSeason]) return;
+    seasons[activeSeason].categories = categories;
+    seasons[activeSeason].budget = { start: budgetStart, spent: budgetSpent };
+  }
+
+  // ── API Storage ───────────────────────────────────────────────────────────────
   const API_URL = 'https://gravity-counter-api.mstocker.workers.dev/'.replace(/\/$/, '');
 
   let saveTimeout = null;
@@ -384,24 +530,49 @@
       if (res.status === 401) { clearToken(); showAuth('login-screen'); return; }
       if (!res.ok) throw new Error('Load failed');
       const data = await res.json();
-      categories = data.categories || [];
-      if (data.budget) {
-        budgetStart = data.budget.start;
-        budgetSpent = data.budget.spent || 0;
-        if (budgetStart !== null) {
-          document.getElementById('budget-input').value = budgetStart;
+
+      if (data.seasons) {
+        // New format
+        seasons = data.seasons;
+        // Convert year keys to numbers
+        const normalized = {};
+        for (const k of Object.keys(seasons)) {
+          const y = Number(k);
+          normalized[y] = { ...seasons[k], year: y };
         }
+        seasons = normalized;
+        activeSeason = Number(data.activeSeason);
+      } else {
+        // Legacy format — migrate to current year
+        const year = new Date().getFullYear();
+        seasons = {
+          [year]: {
+            year,
+            categories: data.categories || [],
+            budget: data.budget || { start: null, spent: 0 },
+          }
+        };
+        activeSeason = year;
       }
-    } catch { categories = []; }
+
+      syncFromActiveSeason();
+    } catch {
+      if (!activeSeason) {
+        const year = new Date().getFullYear();
+        activeSeason = year;
+        seasons = { [year]: { year, categories: [], budget: { start: null, spent: 0 } } };
+      }
+    }
   }
 
   function flushSave() {
     clearTimeout(saveTimeout);
+    syncToActiveSeason();
     fetch(API_URL, {
       method: 'PUT',
       keepalive: true,
       headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categories, budget: { start: budgetStart, spent: budgetSpent } })
+      body: JSON.stringify({ seasons, activeSeason })
     }).catch(() => {});
   }
 
@@ -418,6 +589,7 @@
       await load();
       render();
       renderBudget();
+      renderSeasonSelector();
     }, 10_000);
   }
 
@@ -426,7 +598,193 @@
     syncInterval = null;
   }
 
-  // Render
+  // ── Season UI ─────────────────────────────────────────────────────────────────
+  function renderSeasonSelector() {
+    document.getElementById('season-year').textContent = activeSeason || '—';
+    const years = getSortedSeasonYears();
+    const idx = years.indexOf(activeSeason);
+    document.getElementById('btn-prev-season').disabled = idx <= 0;
+    document.getElementById('btn-next-season').disabled = idx >= years.length - 1;
+  }
+
+  function switchSeason(year) {
+    if (year === activeSeason) return;
+    syncToActiveSeason();
+    activeSeason = year;
+    syncFromActiveSeason();
+    render();
+    renderBudget();
+    renderSeasonSelector();
+    save();
+  }
+
+  function prevSeason() {
+    const years = getSortedSeasonYears();
+    const idx = years.indexOf(activeSeason);
+    if (idx > 0) switchSeason(years[idx - 1]);
+  }
+
+  function nextSeason() {
+    const years = getSortedSeasonYears();
+    const idx = years.indexOf(activeSeason);
+    if (idx < years.length - 1) switchSeason(years[idx + 1]);
+  }
+
+  function openSeasonManager() {
+    renderSeasonList();
+    document.getElementById('season-modal').style.display = 'flex';
+  }
+
+  function closeSeasonModal() {
+    document.getElementById('season-modal').style.display = 'none';
+  }
+
+  function handleSeasonOverlayClick(e) {
+    if (e.target === document.getElementById('season-modal')) closeSeasonModal();
+  }
+
+  function renderSeasonList() {
+    const years = getSortedSeasonYears().reverse();
+    const container = document.getElementById('season-list');
+    if (years.length === 0) {
+      container.innerHTML = '<div style="color:#444; font-size:12px; text-align:center; padding:20px 0;">KEINE SAISONS</div>';
+      return;
+    }
+    container.innerHTML = years.map(year => `
+      <div class="season-item ${year === activeSeason ? 'is-active' : ''}">
+        <span class="season-item-year">${year}</span>
+        ${year === activeSeason ? '<span class="season-badge">AKTIV</span>' : ''}
+        <div class="season-item-actions">
+          ${year !== activeSeason ? `<button class="btn-season-switch" onclick="switchSeason(${year}); closeSeasonModal();">WECHSELN</button>` : ''}
+          <button class="btn-icon" onclick="openEditSeason(${year})">✎</button>
+          ${years.length > 1 && year !== activeSeason ? `<button class="btn-icon" onclick="confirmDeleteSeason(${year})">✕</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openCreateSeason() {
+    editingSeasonYear = null;
+    const years = getSortedSeasonYears();
+    const nextYear = years.length > 0 ? Math.max(...years) + 1 : new Date().getFullYear();
+
+    document.getElementById('season-edit-title').textContent = 'NEUE SAISON';
+    document.getElementById('input-season-year').value = nextYear;
+    document.getElementById('season-error').textContent = '';
+
+    // Populate import dropdown with existing seasons (newest first)
+    const importSelect = document.getElementById('import-from-season');
+    importSelect.innerHTML = [...years].reverse().map(y => `<option value="${y}">${y}</option>`).join('');
+
+    // Reset import checkbox
+    document.getElementById('import-check').checked = false;
+    document.getElementById('import-from-wrap').style.display = 'none';
+    document.getElementById('import-section').style.display = 'block';
+
+    document.getElementById('season-edit-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('input-season-year').focus(), 50);
+  }
+
+  function openEditSeason(year) {
+    editingSeasonYear = year;
+    document.getElementById('season-edit-title').textContent = 'SAISON BEARBEITEN';
+    document.getElementById('input-season-year').value = year;
+    document.getElementById('season-error').textContent = '';
+    document.getElementById('import-section').style.display = 'none';
+    document.getElementById('season-edit-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('input-season-year').focus(), 50);
+  }
+
+  function closeSeasonEditModal() {
+    document.getElementById('season-edit-modal').style.display = 'none';
+    editingSeasonYear = null;
+  }
+
+  function handleSeasonEditOverlayClick(e) {
+    if (e.target === document.getElementById('season-edit-modal')) closeSeasonEditModal();
+  }
+
+  function toggleImportSection() {
+    const checked = document.getElementById('import-check').checked;
+    document.getElementById('import-from-wrap').style.display = checked ? 'block' : 'none';
+  }
+
+  function setSeasonError(msg) {
+    document.getElementById('season-error').textContent = msg;
+  }
+
+  function saveSeason() {
+    const newYear = parseInt(document.getElementById('input-season-year').value);
+    if (!newYear || newYear < 2000 || newYear > 2100) {
+      setSeasonError('UNGÜLTIGES JAHR (2000–2100)');
+      return;
+    }
+    setSeasonError('');
+
+    if (editingSeasonYear === null) {
+      // Create new season
+      if (seasons[newYear]) {
+        setSeasonError(`SAISON ${newYear} EXISTIERT BEREITS`);
+        return;
+      }
+
+      const newSeason = { year: newYear, categories: [], budget: { start: null, spent: 0 } };
+
+      if (document.getElementById('import-check').checked) {
+        const fromYear = parseInt(document.getElementById('import-from-season').value);
+        const fromSeason = seasons[fromYear];
+        if (fromSeason && fromSeason.categories) {
+          newSeason.categories = fromSeason.categories.map((c, i) => ({
+            ...c,
+            id: Date.now() + i,
+            count: 0,
+            sum: 0,
+          }));
+        }
+      }
+
+      seasons[newYear] = newSeason;
+      closeSeasonEditModal();
+      closeSeasonModal();
+      switchSeason(newYear);
+    } else {
+      // Edit existing season year
+      if (newYear !== editingSeasonYear && seasons[newYear]) {
+        setSeasonError(`SAISON ${newYear} EXISTIERT BEREITS`);
+        return;
+      }
+
+      if (newYear !== editingSeasonYear) {
+        // Re-key the season object
+        seasons[newYear] = { ...seasons[editingSeasonYear], year: newYear };
+        delete seasons[editingSeasonYear];
+        if (activeSeason === editingSeasonYear) {
+          activeSeason = newYear;
+        }
+      } else {
+        seasons[newYear].year = newYear;
+      }
+
+      closeSeasonEditModal();
+      renderSeasonSelector();
+      renderSeasonList();
+      save();
+    }
+  }
+
+  function confirmDeleteSeason(year) {
+    if (!confirm(`Saison ${year} wirklich löschen?\nAlle Daten dieser Saison gehen verloren.`)) return;
+    deleteSeason(year);
+  }
+
+  function deleteSeason(year) {
+    delete seasons[year];
+    save();
+    renderSeasonList();
+    renderSeasonSelector();
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   function render() {
     const container = document.getElementById('cards-container');
     if (categories.length === 0) {
@@ -501,7 +859,7 @@
   // Counter actions
   function increment(id) {
     const cat = categories.find(c => c.id === id);
-    if (cat) budgetSpent += cat.step;  // + zählt vom Budget ab
+    if (cat) budgetSpent += cat.step;
     categories = categories.map(c => c.id === id ? {...c, count: c.count+1, sum: c.sum+c.step} : c);
     save(); render(); renderBudget();
   }
@@ -510,7 +868,7 @@
       if (c.id !== id) return c;
       const newCount = Math.max(0, c.count - 1);
       const newSum = c.count > 0 ? c.sum - c.step : c.sum;
-      if (c.count > 0) budgetSpent -= c.step;  // - gibt dem Budget zurück
+      if (c.count > 0) budgetSpent -= c.step;
       return {...c, count: newCount, sum: newSum};
     });
     save(); render(); renderBudget();
@@ -525,7 +883,7 @@
     save(); render(); renderBudget();
   }
 
-  // Modal
+  // ── Ticket Modal ──────────────────────────────────────────────────────────────
   function buildColorPicker() {
     const picker = document.getElementById('color-picker');
     picker.innerHTML = COLORS.map(c => `
@@ -658,7 +1016,10 @@
 
   async function unlockApp() {
     showApp();
-    await load(); render(); renderBudget();
+    await load();
+    render();
+    renderBudget();
+    renderSeasonSelector();
     startSync();
   }
 
@@ -677,8 +1038,16 @@
       }
       return;
     }
-    if (e.key === 'Enter' && document.getElementById('modal').style.display !== 'none') saveCategory();
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') {
+      if (document.getElementById('season-edit-modal').style.display !== 'none') { closeSeasonEditModal(); return; }
+      if (document.getElementById('season-modal').style.display !== 'none') { closeSeasonModal(); return; }
+      closeModal();
+      return;
+    }
+    if (e.key === 'Enter') {
+      if (document.getElementById('season-edit-modal').style.display !== 'none') { saveSeason(); return; }
+      if (document.getElementById('modal').style.display !== 'none') { saveCategory(); return; }
+    }
   });
 
   // ── App Init ────────────────────────────────────────────────────────────────
