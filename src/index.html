@@ -553,7 +553,6 @@
       </div>
       <div class="btn-group">
         <button class="btn-reset" onclick="doLogout()">LOGOUT</button>
-        <button class="btn-reset" onclick="openSettings()">SETTINGS</button>
         <button class="btn-reset" onclick="resetAll()">RESET ALL</button>
         <button class="btn-new" onclick="openAdd()">+ NEUER BESUCH</button>
       </div>
@@ -682,27 +681,6 @@
     </div>
   </div>
 </div>
-
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settings-modal" style="display:none" onclick="handleSettingsOverlayClick(event)">
-  <div class="modal">
-    <div class="modal-title">EINSTELLUNGEN</div>
-    <label>PREIS GRAVITY CARD</label>
-    <div class="euro-wrap">
-      <input type="number" id="settings-budget-input" placeholder="Optional" />
-      <span class="euro-symbol">€</span>
-    </div>
-    <div class="hint">
-      Wenn gesetzt, wird der Amortisationsstatus im Dashboard angezeigt.
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeSettings()">SCHLIESSEN</button>
-      <button class="btn-save" id="btn-save-settings" onclick="saveSettings()"
-        style="background:#f0f0f022; border:1px solid #f0f0f0; color:#f0f0f0;">SPEICHERN</button>
-    </div>
-  </div>
-</div>
-
 <!-- Install Banner -->
 <div id="install-banner">
   <span>Bikepark Tracker zum Startbildschirm hinzufügen?</span>
@@ -1129,30 +1107,6 @@
     }
   }
 
-  function openSettings() {
-    document.getElementById('settings-budget-input').value =
-      (budgetStart !== null && budgetStart !== undefined) ? budgetStart : '';
-    document.getElementById('settings-modal').style.display = 'flex';
-    setTimeout(() => document.getElementById('settings-budget-input').focus(), 50);
-  }
-
-  function closeSettings() {
-    document.getElementById('settings-modal').style.display = 'none';
-  }
-
-  function handleSettingsOverlayClick(e) {
-    if (e.target === document.getElementById('settings-modal')) closeSettings();
-  }
-
-  function saveSettings() {
-    const val = parseFloat(document.getElementById('settings-budget-input').value);
-    budgetStart = isNaN(val) || val <= 0 ? null : val;
-    syncToActiveSeason();
-    save();
-    renderStatistics();
-    closeSettings();
-  }
-
   // Counter actions
   function increment(id) {
     const cat = categories.find(c => c.id === id);
@@ -1343,14 +1297,12 @@
       return;
     }
     if (e.key === 'Escape') {
-      if (document.getElementById('settings-modal').style.display !== 'none') { closeSettings(); return; }
       if (document.getElementById('season-edit-modal').style.display !== 'none') { closeSeasonEditModal(); return; }
       if (document.getElementById('season-modal').style.display !== 'none') { closeSeasonModal(); return; }
       closeModal();
       return;
     }
     if (e.key === 'Enter') {
-      if (document.getElementById('settings-modal').style.display !== 'none') { saveSettings(); return; }
       if (document.getElementById('season-edit-modal').style.display !== 'none') { saveSeason(); return; }
       if (document.getElementById('modal').style.display !== 'none') { saveCategory(); return; }
     }
