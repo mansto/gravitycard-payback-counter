@@ -139,6 +139,18 @@
     }
     .btn-icon:hover { border-color: #555; color: #bbb; }
 
+    .ticket-gc-badge {
+      font-size: 9px; letter-spacing: 1px; font-family: 'IBM Plex Mono', monospace;
+      padding: 3px 6px; border-radius: 4px; flex-shrink: 0;
+      font-weight: 500;
+    }
+    .ticket-gc-badge-yes {
+      background: #7bc03a22; color: #7bc03a; border: 1px solid #7bc03a44;
+    }
+    .ticket-gc-badge-no {
+      background: #33333322; color: #555; border: 1px solid #33333344;
+    }
+
     /* Modal */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.75);
@@ -926,32 +938,39 @@
       container.innerHTML = '<div class="empty">KEINE KATEGORIEN · KLICK AUF "+ NEU"</div>';
       return;
     }
-    container.innerHTML = categories.map(cat => `
-      <div class="card" style="border:1px solid ${cat.color}33;" id="card-${cat.id}">
-        <div class="dot" style="background:${cat.color}; box-shadow:0 0 6px ${cat.color};"></div>
-        <div class="card-info">
-          <span class="card-name" style="color:#f0f0f0;">${escHtml(cat.name)}</span>
-          <span class="counter-meta"><span style="color:${cat.color};">${cat.sum > 0 ? '+' : ''}${fmtEur(cat.sum)}</span> · ${fmtEur(cat.step)}/Ticket</span>
+    container.innerHTML = categories.map(cat => {
+      const isGcTicket = cat.reducesTheCurrentTotalOfTheGravityCardPrice ?? true;
+      const gcBadge = isGcTicket
+        ? '<span class="ticket-gc-badge ticket-gc-badge-yes">GC</span>'
+        : '<span class="ticket-gc-badge ticket-gc-badge-no">—</span>';
+      return `
+        <div class="card" style="border:1px solid ${cat.color}33;" id="card-${cat.id}">
+          <div class="dot" style="background:${cat.color}; box-shadow:0 0 6px ${cat.color};"></div>
+          <div class="card-info">
+            <span class="card-name" style="color:#f0f0f0;">${escHtml(cat.name)}</span>
+            <span class="counter-meta"><span style="color:${cat.color};">${cat.sum > 0 ? '+' : ''}${fmtEur(cat.sum)}</span> · ${fmtEur(cat.step)}/Ticket</span>
+          </div>
+          ${gcBadge}
+          <div class="card-controls">
+            <button class="btn-dec"
+              style="border:1px solid ${cat.color}55; color:${cat.color};"
+              onclick="decrement(${cat.id})"
+              onmouseenter="this.style.background='${cat.color}22'; this.style.borderColor='${cat.color}'"
+              onmouseleave="this.style.background='transparent'; this.style.borderColor='${cat.color}55'">−</button>
+            <span class="counter-number" style="color:${cat.color};">${cat.count}</span>
+            <button class="btn-inc"
+              style="background:${cat.color}22; border:1px solid ${cat.color}; color:${cat.color};"
+              onclick="increment(${cat.id})"
+              onmouseenter="this.style.background='${cat.color}44'"
+              onmouseleave="this.style.background='${cat.color}22'">+</button>
+          </div>
+          <div class="card-actions">
+            <button class="btn-icon" onclick="openEdit(${cat.id})">✎</button>
+            <button class="btn-icon" onclick="deleteCategory(${cat.id})">✕</button>
+          </div>
         </div>
-        <div class="card-controls">
-          <button class="btn-dec"
-            style="border:1px solid ${cat.color}55; color:${cat.color};"
-            onclick="decrement(${cat.id})"
-            onmouseenter="this.style.background='${cat.color}22'; this.style.borderColor='${cat.color}'"
-            onmouseleave="this.style.background='transparent'; this.style.borderColor='${cat.color}55'">−</button>
-          <span class="counter-number" style="color:${cat.color};">${cat.count}</span>
-          <button class="btn-inc"
-            style="background:${cat.color}22; border:1px solid ${cat.color}; color:${cat.color};"
-            onclick="increment(${cat.id})"
-            onmouseenter="this.style.background='${cat.color}44'"
-            onmouseleave="this.style.background='${cat.color}22'">+</button>
-        </div>
-        <div class="card-actions">
-          <button class="btn-icon" onclick="openEdit(${cat.id})">✎</button>
-          <button class="btn-icon" onclick="deleteCategory(${cat.id})">✕</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function fmtEur(val) {
