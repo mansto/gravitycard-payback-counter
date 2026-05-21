@@ -296,9 +296,15 @@
       padding: 10px 14px;
     }
     .season-item.is-active { border-color: #444; }
+    .season-item-info {
+      display: flex; flex-direction: column; gap: 4px; flex: 1;
+    }
     .season-item-year {
       font-family: 'Bebas Neue', cursive; font-size: 20px; letter-spacing: 3px;
-      flex: 1;
+    }
+    .season-item-budget {
+      font-size: 11px; color: #888; font-family: 'IBM Plex Mono', monospace;
+      letter-spacing: 1px;
     }
     .season-badge {
       font-size: 10px; letter-spacing: 2px; color: #7bc03a;
@@ -751,17 +757,25 @@
       container.innerHTML = '<div style="color:#444; font-size:12px; text-align:center; padding:20px 0;">KEINE SAISONS</div>';
       return;
     }
-    container.innerHTML = years.map(year => `
-      <div class="season-item ${year === activeSeason ? 'is-active' : ''}">
-        <span class="season-item-year">${year}</span>
-        ${year === activeSeason ? '<span class="season-badge">AKTIV</span>' : ''}
-        <div class="season-item-actions">
-          ${year !== activeSeason ? `<button class="btn-season-switch" onclick="switchSeason(${year}); closeSeasonModal();">WECHSELN</button>` : ''}
-          <button class="btn-icon" onclick="openEditSeason(${year})">✎</button>
-          ${years.length > 1 && year !== activeSeason ? `<button class="btn-icon" onclick="confirmDeleteSeason(${year})">✕</button>` : ''}
+    container.innerHTML = years.map(year => {
+      const season = seasons[year];
+      const budget = season && season.budget && season.budget.start;
+      const budgetText = budget ? `<span class="season-item-budget">${fmtEur(budget)}</span>` : '';
+      return `
+        <div class="season-item ${year === activeSeason ? 'is-active' : ''}">
+          <div class="season-item-info">
+            <span class="season-item-year">${year}</span>
+            ${budgetText}
+          </div>
+          ${year === activeSeason ? '<span class="season-badge">AKTIV</span>' : ''}
+          <div class="season-item-actions">
+            ${year !== activeSeason ? `<button class="btn-season-switch" onclick="switchSeason(${year}); closeSeasonModal();">WECHSELN</button>` : ''}
+            <button class="btn-icon" onclick="openEditSeason(${year})">✎</button>
+            ${years.length > 1 && year !== activeSeason ? `<button class="btn-icon" onclick="confirmDeleteSeason(${year})">✕</button>` : ''}
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function openCreateSeason() {
