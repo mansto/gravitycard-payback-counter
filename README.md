@@ -170,12 +170,16 @@ Note the Worker URL printed at the end — you'll need it as the `API_URL` secre
 
 ### Worker API
 
+The Worker provides a minimal API for app functionality only. User registration and password management are intentionally excluded and must be handled via separate admin tooling.
+
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `POST` | `/login` | — | Authenticate, receive session token |
 | `POST` | `/logout` | session | Invalidate session |
 | `GET` | `/` | session | Load the authenticated user's data |
 | `PUT` | `/` | session | Save the authenticated user's data |
+
+**Note:** There are no `/register`, `/reset-password`, or user management endpoints. Users must be created by an administrator with direct KV access.
 
 ### KV data structure
 
@@ -228,9 +232,23 @@ npx serve dist
 
 ## 🔐 User Accounts
 
-User registration and password management are handled via the local admin script (`tools/manage.sh`, not in repo) — there is no self-service registration in the app UI.
+**Important:** User registration and password management are handled exclusively via admin scripts (not included in this repository). The Worker API does not provide registration or password reset endpoints — these operations must be performed server-side by an administrator.
 
-- **Login** — session token stored in `localStorage` with 7-day TTL
+### User Management
+
+User accounts must be created and managed using a separate admin script (e.g., `tools/manage.sh`) that directly interacts with the Cloudflare KV namespace. This script should support:
+
+- Creating new user accounts with username and password
+- Resetting user passwords
+- Deleting user accounts
+- Listing existing users
+
+The admin script must have access to the same KV namespace and use the same password hashing algorithm (PBKDF2-SHA-256, 10,000 iterations) as the Worker.
+
+### App Behavior
+
+- **Login only** — the app UI only provides login functionality
+- **Session management** — session token stored in `localStorage` with 7-day TTL
 - **Logout** — button in the app header; invalidates the session on the server
 - **Data isolation** — each user account has its own data; no cross-user access
 - **Real-time sync** — background polling every 10 seconds keeps data synchronized across devices (only when tab is visible and no pending saves)
