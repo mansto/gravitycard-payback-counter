@@ -126,6 +126,7 @@
 
     /* Mobile optimizations */
     @media (max-width: 480px) {
+      .app { padding: 14px 12px 80px; }
       .title { font-size: 20px; letter-spacing: 2px; }
       .btn-group { gap: 4px; }
       .btn-reset {
@@ -147,13 +148,21 @@
       .stats-value { font-size: 24px; }
       .stats-sublabel { font-size: 9px; }
       .stats-subvalue { font-size: 11px; }
+      .cards { gap: 6px; }
+      .card { gap: 8px; padding: 8px 10px; }
+      .dot { width: 7px; height: 7px; }
       .card-name { font-size: 15px; letter-spacing: 1px; }
       .counter-meta { font-size: 9px; }
-      .ticket-gc-badge { font-size: 8px; padding: 2px 5px; }
+      .card-controls { gap: 4px; }
+      .btn-dec, .btn-inc { padding: 5px 10px; font-size: 18px; }
+      .counter-number { font-size: 26px; min-width: 32px; letter-spacing: 1px; }
+      .ticket-gc-badge { font-size: 8px; padding: 2px 4px; letter-spacing: 0.5px; }
+      .card-actions { gap: 4px; }
+      .btn-icon { padding: 2px 5px; font-size: 10px; }
     }
 
     @media (max-width: 360px) {
-      .app { padding: 12px 10px 80px; }
+      .app { padding: 10px 8px 80px; }
       .title { font-size: 18px; letter-spacing: 1px; }
       .header-row { gap: 8px; }
       .btn-group { gap: 3px; }
@@ -172,14 +181,17 @@
       .season-row { gap: 4px; margin-top: 8px; }
       .btn-season-nav { padding: 3px 6px; font-size: 10px; }
       .season-label-btn { padding: 3px 8px; font-size: 12px; letter-spacing: 1px; }
-      .card { gap: 6px; padding: 9px 10px; }
-      .card-name { font-size: 14px; letter-spacing: 0.5px; }
+      .cards { gap: 5px; }
+      .card { gap: 5px; padding: 7px 8px; }
+      .dot { width: 6px; height: 6px; }
+      .card-name { font-size: 13px; letter-spacing: 0.5px; }
       .counter-meta { font-size: 8px; }
-      .btn-dec, .btn-inc { padding: 5px 8px; font-size: 18px; }
-      .counter-number { font-size: 24px; min-width: 28px; letter-spacing: 1px; }
       .card-controls { gap: 3px; }
-      .ticket-gc-badge { font-size: 7px; padding: 2px 4px; letter-spacing: 0.5px; }
-      .btn-icon { padding: 2px 5px; font-size: 10px; }
+      .btn-dec, .btn-inc { padding: 4px 7px; font-size: 16px; }
+      .counter-number { font-size: 22px; min-width: 26px; letter-spacing: 0.5px; }
+      .ticket-gc-badge { font-size: 7px; padding: 2px 3px; letter-spacing: 0; }
+      .card-actions { gap: 3px; }
+      .btn-icon { padding: 2px 4px; font-size: 9px; }
       .statistics-panel { padding: 12px 14px; }
       .stats-main { gap: 20px; }
       .stats-value { font-size: 22px; }
