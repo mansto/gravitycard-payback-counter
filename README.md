@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🃏 Gravity Card Payback Counter
+# 🚵 Bikepark Tracker
 
-**A sleek PWA for tracking your Gravity Card purchases by category — with budget control and user accounts.**
+**A sleek PWA for tracking bikepark ticket purchases per season — with Gravity Card amortization tracking and multi-user accounts.**
 
 ![PWA](https://img.shields.io/badge/PWA-ready-blueviolet?style=flat-square&logo=googlechrome)
 ![Vanilla JS](https://img.shields.io/badge/Vanilla-JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)
@@ -17,9 +17,12 @@
 
 | | |
 |---|---|
-| 🎿 **Ticket Counters** | Create custom ticket categories, each with its own color and price |
-| 💰 **Budget Tracking** | Set the Gravity Card price and watch your remaining balance update in real time |
+| 🎿 **Ticket Counters** | Create custom ticket categories with color-coding and per-ticket pricing |
+| 📅 **Season Management** | Organize tickets by season, switch between years, import tickets from previous seasons |
+| 💰 **Gravity Card Tracking** | Set your Gravity Card price per season and track amortization status in real time |
+| 🎫 **Mixed Ticket Types** | Support for both Gravity Card tickets and regular tickets — each tracked separately |
 | 🔐 **User Accounts** | Login with username and password — each user sees only their own data |
+| 🔄 **Real-time Sync** | Background polling keeps data synced across multiple devices |
 | 📱 **Installable PWA** | Add to home screen on iOS and Android for a native app experience |
 | ☁️ **Cloud Storage** | All data stored in Cloudflare KV — reliable across browser restarts and devices |
 
@@ -28,13 +31,17 @@
 ## 📸 App Overview
 
 ```
-┌─────────────────────────────┐
-│   🔐 Login                  │  Username + password
-├─────────────────────────────┤
-│   💳 Budget Panel           │  Set Gravity Card price · live remaining balance in €
-├─────────────────────────────┤
-│   🎿 Ticket Cards           │  Per-ticket counter · increment / decrement
-└─────────────────────────────┘
+┌─────────────────────────────────────────┐
+│   🔐 Login                              │  Username + password (admin-managed)
+├─────────────────────────────────────────┤
+│   📅 Season Selector                    │  Switch between years · manage seasons
+├─────────────────────────────────────────┤
+│   📊 Statistics Panel                   │  Total spent · Gravity Card vs regular tickets
+│                                         │  Gravity Card amortization status (color-coded)
+├─────────────────────────────────────────┤
+│   🎿 Ticket Cards                       │  Per-ticket counter with GC/NORMAL badge
+│                                         │  Color-coded · increment / decrement
+└─────────────────────────────────────────┘
 ```
 
 ---
@@ -75,6 +82,60 @@
     └── workflows/
         └── deploy.yml  # CI/CD: build + deploy to gh-pages on push to main
 ```
+
+---
+
+## 🗂️ Data Model
+
+### Season Structure
+
+```javascript
+{
+  seasons: {
+    2024: {
+      year: 2024,
+      categories: [
+        {
+          id: "cat_abc123",
+          name: "Wexltrails halbtags",
+          color: "#3a7bc0",
+          price: 35,
+          count: 5,
+          sum: 175,
+          reducesTheCurrentTotalOfTheGravityCardPrice: true  // GC ticket
+        },
+        {
+          id: "cat_def456",
+          name: "Bikepark Leogang Tagesticket",
+          color: "#c0703a",
+          price: 55,
+          count: 2,
+          sum: 110,
+          reducesTheCurrentTotalOfTheGravityCardPrice: false  // Regular ticket
+        }
+      ],
+      budget: {
+        start: 599,   // Gravity Card price
+        spent: 175    // Sum of all GC tickets (calculated)
+      }
+    },
+    2025: { /* ... */ }
+  },
+  activeSeason: 2024
+}
+```
+
+### Ticket Category Fields
+
+- `id` — unique identifier (generated on creation)
+- `name` — display name
+- `color` — hex color from predefined palette
+- `price` — cost per ticket in €
+- `count` — number of times this ticket was used
+- `sum` — total spending for this ticket (`price × count`)
+- `reducesTheCurrentTotalOfTheGravityCardPrice` — boolean flag
+  - `true` (default) — ticket counts toward Gravity Card amortization
+  - `false` — regular ticket, tracked separately
 
 ---
 
@@ -122,8 +183,8 @@ Note the Worker URL printed at the end — you'll need it as the `API_URL` secre
 ### KV data structure
 
 ```
-users:{username}       → account (passwordHash, userId, …)
-user-data:{userId}     → app data (categories, budget)
+users:{username}       → account (passwordHash, userId, createdAt)
+user-data:{userId}     → app data ({ seasons: { [year]: { year, categories, budget } }, activeSeason })
 sessions:{token}       → session record (7-day TTL)
 reset:{token}          → reset record (1-hour TTL)
 ```
@@ -171,11 +232,28 @@ npx serve dist
 
 ## 🔐 User Accounts
 
-User registration and password management are handled via the local admin script — there is no self-service registration in the app UI.
+User registration and password management are handled via the local admin script (`tools/manage.sh`, not in repo) — there is no self-service registration in the app UI.
 
-- **Login** — session is stored in `localStorage` and lasts 7 days
+- **Login** — session token stored in `localStorage` with 7-day TTL
 - **Logout** — button in the app header; invalidates the session on the server
 - **Data isolation** — each user account has its own data; no cross-user access
+- **Real-time sync** — background polling every 10 seconds keeps data synchronized across devices (only when tab is visible and no pending saves)
+
+---
+
+## 📅 Seasons
+
+Organize your tickets by season (year). Each season has its own:
+
+- **Ticket categories** — create tickets specific to that season
+- **Gravity Card price** — set once per season
+- **Statistics** — track spending and amortization status per season
+
+**Season Management:**
+- Create new seasons with optional ticket import from previous years
+- Switch between seasons using prev/next buttons or the season manager
+- Edit season details (year, Gravity Card price)
+- Delete unused seasons (cannot delete the active season if it's the only one)
 
 ---
 
@@ -185,16 +263,26 @@ Each ticket has:
 
 - **Name** — e.g. *Wexltrails halbtags*, *Wexltrails ganztags*
 - **Color** — pick from 8 accent colors
-- **Ticket price** — every `+` click deducts this amount (in €) from the Gravity Card balance
+- **Ticket price** — cost per ticket in €
+- **Gravity Card flag** — checkbox indicating if this ticket counts toward Gravity Card amortization
+  - **GC badge** (green) — ticket reduces Gravity Card balance
+  - **NORMAL badge** (red) — regular ticket, tracked separately
+
+Every `+` click increments the counter and adds the ticket price to the total. Every `−` click decrements and refunds. Only tickets marked as "Gravity Card" affect the Gravity Card balance calculation.
 
 ---
 
-## 💳 Budget
+## 💳 Gravity Card Tracking
 
-Enter the price of your Gravity Card. Every `+` click on any ticket deducts its price from the remaining balance. Every `−` click refunds it.
+Set the Gravity Card price per season in the settings or during season creation. The statistics panel shows:
+
+- **Total spent** — sum of all ticket usage
+- **Gravity Card tickets** — spending that counts toward amortization
+- **Regular tickets** — spending on non-Gravity Card tickets
+- **Remaining balance** — Gravity Card price minus Gravity Card spending
 
 | Status | Color |
 |--------|-------|
-| Balance still positive (card not yet paid off) | 🔴 Red |
-| Balance at zero or below (card has paid off) | 🟢 Green |
-| No price set | ⚫ Gray |
+| Balance still positive (card not yet amortized) | 🔴 Red |
+| Balance at zero or below (card fully amortized) | 🟢 Green |
+| No Gravity Card price set | ⚫ Gray |
